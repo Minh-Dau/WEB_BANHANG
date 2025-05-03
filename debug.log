@@ -1,0 +1,24 @@
+Array
+(
+    [id] => 73
+    [username] => adminne
+    [email] => admin@st.vlute.edu.vn
+    [password] => 1234
+    [sdt] => 
+    [diachi] => 
+    [phanquyen] => admin
+    [trangthai] => hoạt động
+    [current_anh] => 
+)
+Array
+(
+    [anh] => Array
+        (
+            [name] => demo.jpeg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpD1D7.tmp
+            [error] => 0
+            [size] => 11692
+        )
+
+)

@@ -1,0 +1,518 @@
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Times New Roman', Times, serif;
+}
+a{
+    color: rgb(0, 68, 255);
+    text-decoration: none;
+}
+.login i {
+    color: black; /* Đổi màu icon thành đen */
+    transition: color 0.3s ease;
+}
+
+.login:hover i {
+    color: #333; /* Khi hover sẽ tối hơn một chút */
+}
+.danhsach a{
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-right: 10px;
+}
+.thea{
+    text-decoration: none;
+    color: rgb(65, 65, 65);
+    font-size: 20px;
+    margin-right: 40px;
+    margin-left: -15px;
+}
+.main{
+    background-color: rgb(255, 255, 255);
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+.thea:hover{
+    color:  black;
+}
+.thea > a {
+    color: inherit; /* Kế thừa màu chữ từ class cha */
+}
+.thecon a{
+    color: rgb(255, 255, 255);
+}
+.danhsach{
+    margin-left: -500px;
+}
+header{
+    background-color: rgb(255, 255, 255);
+    display: flex; /*Nằm cùng hàng*/
+    justify-content: space-between; /*Chia ảnh - Text - Button ra đều*/
+    align-content: center;
+    padding: 25px 5%;
+    text-decoration: none; /*Loại bỏ gạch chân*/ 
+}
+.main ul{
+    display: inline-flex; /*Cho các TEXT nằm cùng hàng*/
+    list-style: none; /*Bỏ các mục của list*/
+}
+.main ul li{
+    padding: 10px;
+}
+/*------------------------------------------------------------------*/
+/*------------------HIỆU ỨNG THẺ A*/
+.thea::after{
+    content: ''; /*Đặt chuỗi rỗng*/
+    width: 0; /*Độ dài thanh ngang ban đầu*/
+    height: 2px; /*Độ cao thanh ngang*/
+    background-color:  rgb(0, 0, 0);
+    border-radius: 45px;
+    margin: auto; /*Căn giữa chữ*/
+    display: block; /*Chiều ngang chiếm hết text*/
+    margin-right: 9px;
+}
+.thea:hover::after{
+    width: 90%; /*Khi đưa chuột vào đường ngang sẽ chạy đều với text*/
+    transition: all 0.3s ease 0s;
+}
+/*------------------------------------------------------------------*/
+/*------------------MỤC SHOP*/
+
+/*------------------------------------------------------------------*/
+.imgLogo {
+    display: block;
+    text-align: center;
+    width: 35%;
+    padding-top: 15px;
+    justify-content: center;
+    padding: 10px;
+}
+.shopping, .login {
+    display: inline-block;
+    font-size: 30px;
+    vertical-align: middle; /* Để căn giữa theo chiều dọc */
+    margin-right: 5px; /* Khoảng cách giữa chúng */
+}
+.container{
+    margin: auto;
+}
+.row{
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+.footer{
+    background-color: #ffffff;
+    padding: 50px;
+}
+.support{
+    font-size: 20px;
+    background-color: rgb(228, 228, 228);
+    padding: 30px;
+}
+.footer-col{
+    width: 20%;
+    padding:0 15px;
+}
+.footer-col h4{
+    font-size: 25px;
+    color: rgb(0, 0, 0);
+    text-transform: capitalize;
+    margin-bottom: 20px;
+}
+.footer-col ul li{
+    font-size: 18px;
+    color: rgb(0, 0, 0);
+    text-transform: capitalize;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 15px;
+}
+.footer p{
+    font-size: 18px;
+    color: rgb(0, 0, 0);
+    margin-bottom: 15px;
+}
+.banquyen{
+    display: flex;
+    justify-content: center;
+    padding: 30px;
+}
+.contact{
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    align-items: center;
+    padding: 10px;
+}
+.anh{
+    display: flex;
+    justify-content: center;
+}
+.noidung{
+    color: rgb(65,65,65);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 20px;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 300px;
+    padding-right: 300px;
+    margin: auto;
+}
+.headline {
+    margin-top: 30px;
+    text-align: center; /* Center the text horizontally */
+    padding: 20px; /* Add some padding for better visual appearance */
+}
+.wrapper{
+    display: flex;
+    justify-content: center;
+}
+h3{
+    font-size: 50px;
+    text-transform: uppercase;
+    display: inline-block;
+    font-weight: 600;
+}
+.product{
+    flex-wrap: wrap;
+    display: flex;
+    list-style: none;
+    
+    /* margin-bottom: 50px;
+    margin-bottom: 50px;
+    margin-left: 400px;
+    margin-right: 300px; */
+    margin: 20px 0 20px 0;
+    width: 1280px;
+}
+.product .buy_now{
+    text-decoration: none;
+    background-color: #707070;
+    padding: 6px;
+    width: 80px;
+    color: white;
+    text-align: center;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+.product .buy_now:hover{
+    background: rgb(0, 0, 0);
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+.product .product_item{
+    width: 300px;
+    height: 380px;
+    padding: 0 25px;
+    margin: 10px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    border-radius: 10px;
+}
+.product .product_cat{
+    color: rgb(0, 0, 0);
+    padding: 3px 0px;
+    text-decoration: none;
+}
+.product .product_price{
+    font-weight: 600 ;
+    padding: 5px 0px;
+}
+.product .product_top{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+/* Product All Section */
+.product_all {
+    text-align: center; /* Center the link */
+    margin: 30px 0; /* Add spacing above and below */
+    padding: 10px 0; /* Slight padding for balance */
+}
+
+/* Style for the "Xem tất cả" link */
+.product_all a {
+    display: inline-block; /* Allows padding and other block-level styling */
+    padding: 12px 30px; /* Comfortable padding for a button-like appearance */
+    font-family: 'Poppins', sans-serif; /* Modern font (include via Google Fonts) */
+    font-size: 16px; /* Readable font size */
+    font-weight: 600; /* Slightly bold for emphasis */
+    text-transform: uppercase; /* Uppercase for a professional look */
+    letter-spacing: 0.5px; /* Slight letter spacing for elegance */
+    color: #ffffff; /* White text */
+    background-color: #007bff; /* Primary blue background */
+    border-radius: 25px; /* Rounded corners for a modern feel */
+    text-decoration: none; /* Remove default underline */
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2); /* Subtle shadow for depth */
+    transition: all 0.3s ease-in-out; /* Smooth transition for hover effects */
+}
+
+/* Hover effect for the link */
+.product_all a:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3); /* Enhanced shadow on hover */
+}
+.img_main{
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%; 
+    margin: auto;
+    overflow: hidden;
+    position: relative;
+}
+
+.carousel {
+    display: flex;
+    transition: transform 0.3s ease-in-out;
+    cursor: grab;
+    will-change: transform;
+}
+
+.carousel img {
+    width: 100%;
+    height: 100%;
+    flex-shrink: 0;
+    user-select: none;
+    pointer-events: none;
+}
+
+.headline2 {
+    margin-top: 30px;
+    text-align: center; /* Center the text horizontally */
+    padding-top: 20px; /* Add some padding for better visual appearance */
+}
+h6{
+    font-size: 50px;
+    padding: 10px 20px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.thumb_shop img{
+    display: flex;
+    width: 100%;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 20px;
+}
+.product_thumb img:hover{
+    filter: opacity(80%);
+}
+
+/* Forgot Password Container */
+.forgot-password-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh; /* Center the form vertically */
+    padding: 20px;
+}
+
+.quenmatkhau_form {
+    background-color: #ffffff; /* White background for the form */
+    padding: 40px;
+    border-radius: 15px; /* Rounded corners */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    max-width: 450px; /* Limit the width for better readability */
+    width: 100%;
+    text-align: center;
+}
+
+.tieude_quenmatkhau {
+    font-size: 28px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.quayve_login {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #007bff;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+.quayve_login:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.quayve_login i {
+    margin-right: 5px;
+}
+
+/* Form Inputs */
+.cha_quen {
+    margin-bottom: 20px;
+}
+
+.nhap_quen {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.nhap_quen:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+}
+
+.nhap_quen::placeholder {
+    color: #999;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.submit-btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+/* Error Message (Using the Style from Previous Query) */
+.error-message {
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: #dc3545; /* Red for errors */
+    text-align: center;
+    letter-spacing: 0.5px;
+    background-color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-top: 20px;
+    display: inline-block;
+    transition: transform 0.3s ease-in-out;
+}
+
+.error-message:hover {
+    transform: scale(1.02);
+}
+
+/* Special case for success message (e.g., "Đã gửi mã xác nhận...") */
+form + p.error-message {
+    color: #28a745; /* Green for success */
+}
+/* Đảm bảo div.no_product không bị ảnh hưởng */
+.product .no-product {
+    text-align: center;
+    width: 100%;
+}
+
+/* CSS riêng cho thông báo không có sản phẩm */
+.product .no-product {
+    color: red;
+    font-size: 50px;
+    margin: 0;
+}
+.profile-container {
+    background-color: #fff;
+    max-width: 500px;
+    margin: 25px auto;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+.profile-container h2 {
+    margin-top: 0;
+    color: #333;
+}
+.profile-container p {
+    color: #777;
+    font-size: 14px;
+}
+.avatar {
+    display: block;
+    margin: 0 auto 20px;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.profile-form label {
+    font-weight: bold;
+    color: #555;
+}
+.profile-form input[type="email"],
+.profile-form input[type="text"],
+.profile-form input[type="password"],
+.profile-form input[type="file"],
+.profile-form select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.btn {
+    background-color: rgb(0, 123, 255);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.btn:hover {
+    background-color: rgb(0, 108, 224);
+    transform: scale(1.05);
+}
+.btn:active {
+    transform: scale(0.98);
+}
+.logout-btn {
+    display: block;
+    text-align: center;
+    padding: 12px 20px;
+    background-color: #dc3545;
+    color: white;
+    font-size: 16px;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+}
+.logout-btn:hover {
+    background-color: #c82333;
+    transform: scale(1.05);
+}
+.logout-btn:active {
+    transform: scale(0.98);
+}
+

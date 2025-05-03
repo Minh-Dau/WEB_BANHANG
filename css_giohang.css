@@ -1,0 +1,687 @@
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+a{
+    color: rgb(0, 0, 0);
+    text-decoration: none;
+}
+.danhsach a{
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-right: 10px;
+}
+.thea{
+    text-decoration: none;
+    color: rgb(65, 65, 65);
+    font-size: 20px;
+    margin-right: 40px;
+    margin-left: -15px;
+}
+.main{
+    background-color: rgb(255, 255, 255);
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+.thea:hover{
+    color:  black;
+}
+.thea > a {
+    color: inherit; /* Kế thừa màu chữ từ class cha */
+}
+.thecon a{
+    color: rgb(255, 255, 255);
+}
+.danhsach{
+    margin-left: -500px;
+}
+header{
+    background-color: rgb(255, 255, 255);
+    display: flex; /*Nằm cùng hàng*/
+    justify-content: space-between; /*Chia ảnh - Text - Button ra đều*/
+    align-content: center;
+    padding: 25px 5%;
+    text-decoration: none; /*Loại bỏ gạch chân*/ 
+}
+.main ul{
+    display: inline-flex; /*Cho các TEXT nằm cùng hàng*/
+    list-style: none; /*Bỏ các mục của list*/
+}
+.main ul li{
+    padding: 10px;
+}
+/*------------------------------------------------------------------*/
+/*------------------HIỆU ỨNG THẺ A*/
+.thea::after{
+    content: ''; /*Đặt chuỗi rỗng*/
+    width: 0; /*Độ dài thanh ngang ban đầu*/
+    height: 2px; /*Độ cao thanh ngang*/
+    background-color:  rgb(0, 0, 0);
+    border-radius: 45px;
+    margin: auto; /*Căn giữa chữ*/
+    display: block; /*Chiều ngang chiếm hết text*/
+    margin-right: 9px;
+}
+.thea:hover::after{
+    width: 90%; /*Khi đưa chuột vào đường ngang sẽ chạy đều với text*/
+    transition: all 0.3s ease 0s;
+}
+/*------------------------------------------------------------------*/
+/*------------------MỤC SHOP*/
+
+/*------------------------------------------------------------------*/
+.imgLogo {
+    display: block;
+    text-align: center;
+    width: 35%;
+    padding-top: 15px;
+    justify-content: center;
+    padding: 10px;
+}
+.shopping, .login {
+    display: inline-block;
+    font-size: 30px;
+    vertical-align: middle; /* Để căn giữa theo chiều dọc */
+    margin-right: 5px; /* Khoảng cách giữa chúng */
+}
+.container{
+    margin: auto;
+}
+.row{
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+.footer{
+    background-color: #ffffff;
+    padding: 50px;
+}
+.support{
+    font-size: 20px;
+    background-color: rgb(228, 228, 228);
+    padding: 30px;
+}
+.footer-col{
+    width: 20%;
+    padding:0 15px;
+}
+.footer-col h4{
+    font-size: 25px;
+    color: rgb(0, 0, 0);
+    text-transform: capitalize;
+    margin-bottom: 20px;
+}
+.footer-col ul li{
+    font-size: 18px;
+    color: rgb(0, 0, 0);
+    text-transform: capitalize;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 15px;
+}
+.footer p{
+    font-size: 18px;
+    color: rgb(0, 0, 0);
+    margin-bottom: 15px;
+}
+.banquyen{
+    display: flex;
+    justify-content: center;
+    padding: 30px;
+}
+.contact{
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    align-items: center;
+    padding: 10px;
+}
+.welcome{
+    text-align: right;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-size: 20px;
+    border-radius: 20px;
+    margin-right: 100px;
+}
+.welcome a{
+    color: rgb(187, 187, 187);
+    text-decoration: none;
+}
+.welcome a:hover{
+    color: rgb(0, 0, 0);
+    text-decoration:underline;
+}
+.welcome_user{
+    color: #000000;
+    font-weight: bold;
+    font-style: italic;
+}
+.table_full{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+main.table {
+    width: 63vw;
+    background-color: rgba(255, 255, 255, 0.333);
+    backdrop-filter: blur(7px);
+    box-shadow: 0 .4rem .8rem #0005;
+    border-radius: .8rem;
+    overflow: hidden;
+    text-align: center;
+    font-size: 18px;
+    text-transform: uppercase;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.image_error{
+    padding-top: 10px;
+}
+.table__header {
+    width: 100%;
+    height: 10%;
+    background-color: #fff4;
+    padding: .8rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.table__header h1{
+    margin-top: 10px;
+    margin-left: 10px;
+}
+.table__header .input-group {
+    width: 35%;
+    height: 100%;
+    background-color: #fff5;
+    padding: 0 .8rem;
+    border-radius: 2rem;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    transition: .2s;
+}
+.table__header .input-group:hover {
+    width: 45%;
+    background-color: #fff8;
+    box-shadow: 0 .1rem .4rem #0002;
+}
+.table__header .input-group img {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+.table__header .input-group input {
+    width: 100%;
+    padding: 0 .5rem 0 .3rem;
+    background-color: transparent;
+    border: none;
+    outline: none;
+}
+
+.table__body {
+    width: 90%;
+    max-height: calc(89% - 1.6rem);
+    background-color: #fffb;
+
+    margin: .8rem auto;
+    border-radius: .6rem;
+
+    overflow: auto;
+    overflow: overlay;
+}
+.table__body::-webkit-scrollbar{
+    width: 0.5rem;
+    height: 0.5rem;
+}
+.table__body::-webkit-scrollbar-thumb{
+    border-radius: .5rem;
+    background-color: #0004;
+    visibility: hidden;
+}
+table {
+    width: 100%;
+}
+td img {
+    width: 150px;
+    height: 150px;
+    vertical-align: middle;
+    padding-bottom: 10px;
+}
+table, th, td {
+    border-collapse: collapse;
+    padding: 20px 10px 20px 10px;
+    text-align: center;
+}
+thead th {
+    /* position: sticky; */
+    top: 0;
+    left: 0;
+    background-color: #d5d1defe;
+    cursor: pointer;
+    text-transform: capitalize;
+}
+tbody tr {
+    --delay: .1s;
+    transition: .5s ease-in-out var(--delay), background-color 0s;
+}
+tbody tr.hide {
+    opacity: 0;
+    transform: translateX(100%);
+}
+tbody tr td,
+tbody tr td p,
+tbody tr td img {
+    transition: .2s ease-in-out;
+}
+tbody tr.hide td,
+tbody tr.hide td p {
+    padding: 0;
+    font: 0 / 0 sans-serif;
+    transition: .2s ease-in-out .5s;
+}
+tbody tr.hide td img {
+    width: 0;
+    height: 0;
+    transition: .2s ease-in-out .5s;
+}
+.contact-form-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.contact-form{
+    width: 85%;
+    max-width: 600px;
+    background: #ffffff;
+    padding: 30px 40px;
+    box-sizing: border-box;
+    border-radius: 30px;
+    text-align: center;
+    box-shadow: 0 0 20px #000000b3;
+    margin-top: 50px;
+    margin-bottom: 30px;
+}
+.contact-form p{
+    text-align: left;
+}
+.contact-form h1{
+    margin-top: 0;
+    font-weight: 200;
+}
+.txtb{
+    border:1px solid rgb(138, 138, 138);
+    margin: 8px 0;
+    padding: 12px 18px;
+    border-radius: 8px;
+}
+.txtb label{
+    display: block;
+    text-align: left;
+    color: #000000;
+    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: bold;
+}
+.txtb input,.txtb textarea{
+    width: 100%;
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 18px;
+    margin-top: 6px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.remove{
+    color: red;
+}
+.tr_tongtien{
+    background-color: #d5d1defe;
+}
+/* Error */
+.cart_error{
+    text-align: center;
+}
+.btn_dentrangsp a{
+    font-size: 20px;
+    color: white;
+    text-decoration: none;
+}
+.btn_dentrangsp{
+    background-color: rgb(255, 75, 75);
+    padding: 10px;
+    width: 200px;
+    margin: 0 auto;
+    border-radius: 5px;
+}
+.img_success{
+    padding-top: 20px;
+}
+.btn_dentrangsp:hover{
+    background-color: rgb(255, 31, 31);
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+}
+/* Thành Công */
+.cart_success{
+    text-align: center;
+}
+.btn_tieptuc a{
+    font-size: 20px;
+    color: white;
+    text-decoration: none;
+}
+.btn_tieptuc{
+    background-color: #8cc542;
+    padding: 10px;
+    width: 200px;
+    margin: 0 auto;
+    border-radius: 5px;
+    margin-bottom: 50px;
+}
+.btn_tieptuc:hover{
+    background-color: #7dc222;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+}
+.btn_capnhat {
+    display: flex;
+    justify-content: center; /* Căn trái nút Xóa tất cả */
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 0 20px;
+}
+.submit_del{
+    color: white;
+    font-size: 20px;
+    background-color: #ff4545;
+    padding: 5px 15px 5px 15px;
+    border-radius: 4px;
+    border-color: #a5a5a5;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+}
+.submit_del:hover{
+    background-color: #ff0000;
+    color: white;
+}
+.submit_pay{
+    color: white;
+    font-size: 20px;
+    background-color: #1eff00; /* Màu xanh lá giống hình ảnh */
+    padding: 5px 15px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+    width: 100%; /* Chiếm toàn bộ chiều rộng của checkout-form */
+}
+.submit_pay:hover{
+    background-color: #22a800;
+    color: rgb(255, 255, 255);
+}
+/* Định dạng ô input trong phần thông tin thanh toán */
+.info-item input[type="text"] {
+    width: 100%; /* Chiều rộng đầy đủ */
+    padding: 8px; /* Khoảng cách bên trong */
+    border: 1px solid #ddd; /* Viền nhạt */
+    border-radius: 5px; /* Bo góc */
+    font-size: 14px; /* Kích thước chữ */
+    color: #333; /* Màu chữ */
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+    transition: border-color 0.3s ease; /* Hiệu ứng chuyển màu viền */
+}
+
+/* Hiệu ứng focus cho ô input */
+.info-item input[type="text"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+hr{
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;
+}
+.quantity-control {
+    border: 1px rgb(153, 151, 151) solid;
+    border-radius: 5px;
+    width: 100px;
+}
+
+.quantity-btn {
+    background: #ffffff;
+    border: none;
+    cursor: pointer;
+    margin: 0;
+    width: 90px;
+    fill: rgb(0, 0, 0);   
+    width: 20px;
+    height: 20px;
+    font-size: 15px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.quantity-btn:hover {
+    background-color: #e0e0e0; /* Màu nền khi hover */
+}
+
+.quantity-input {
+    width: 40px; /* Chiều rộng ô nhập */
+    text-align: center; /* Căn giữa số */
+    border: none; /* Bỏ viền ô nhập */
+    padding: 8px 0; /* Khoảng cách bên trong */
+    font-size: 16px; /* Kích thước chữ */
+    outline: none; /* Bỏ viền focus */
+}
+
+/* Đảm bảo ô nhập không có viền thừa khi focus */
+.quantity-input:focus {
+    outline: none;
+}
+/* Định dạng chung cho checkout-form */
+.checkout-form {
+    max-width: 600px; /* Giới hạn chiều rộng tối đa */
+    margin: 30px auto; /* Căn giữa và thêm khoảng cách phía trên/dưới */
+    padding: 20px; /* Khoảng cách bên trong */
+    background-color: #f9f9f9; /* Màu nền nhạt */
+    border-radius: 8px; /* Bo góc */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Bóng đổ nhẹ */
+    font-family: Arial, sans-serif; /* Font chữ */
+}
+
+/* Định dạng tiêu đề "Thông tin thanh toán" */
+.checkout-form h2 {
+    text-align: center; /* Căn giữa */
+    color: #333; /* Màu chữ đậm */
+    margin-bottom: 25px; /* Khoảng cách phía dưới */
+    font-size: 24px; /* Kích thước chữ */
+    font-weight: bold; /* Đậm chữ */
+}
+
+/* Định dạng từng mục thông tin (info-item) */
+.info-item {
+    margin-bottom: 20px; /* Khoảng cách giữa các mục */
+}
+
+/* Định dạng label */
+.info-item label {
+    display: block; /* Hiển thị trên một dòng riêng */
+    font-weight: bold; /* Đậm chữ */
+    color: #555; /* Màu chữ nhạt */
+    margin-bottom: 8px; /* Khoảng cách dưới label */
+    font-size: 16px; /* Kích thước chữ */
+}
+
+/* Định dạng span (hiển thị thông tin người dùng) */
+.info-item span {
+    display: block; /* Hiển thị trên một dòng riêng */
+    padding: 10px; /* Khoảng cách bên trong */
+    background-color: #fff; /* Màu nền trắng */
+    border: 1px solid #ddd; /* Viền nhạt */
+    border-radius: 5px; /* Bo góc */
+    font-size: 16px; /* Kích thước chữ */
+    color: #333; /* Màu chữ */
+    transition: border-color 0.3s ease; /* Hiệu ứng chuyển màu viền */
+}
+
+/* Hiệu ứng hover cho span */
+.info-item span:hover {
+    border-color: #4CAF50; /* Đổi màu viền khi hover */
+}
+
+/* Định dạng textarea (Ghi chú) */
+.info-item textarea {
+    width: 100%; /* Chiều rộng đầy đủ */
+    height: 100px; /* Chiều cao cố định */
+    padding: 10px; /* Khoảng cách bên trong */
+    border: 1px solid #ddd; /* Viền nhạt */
+    border-radius: 5px; /* Bo góc */
+    font-size: 16px; /* Kích thước chữ */
+    color: #333; /* Màu chữ */
+    resize: vertical; /* Chỉ cho phép thay đổi chiều cao */
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+    transition: border-color 0.3s ease; /* Hiệu ứng chuyển màu viền */
+}
+
+/* Hiệu ứng focus cho textarea */
+.info-item textarea:focus {
+    outline: none; /* Bỏ viền mặc định của trình duyệt */
+    border-color: #4CAF50; /* Đổi màu viền khi focus */
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3); /* Bóng đổ nhẹ khi focus */
+}
+
+/* Responsive: Điều chỉnh trên thiết bị di động */
+@media (max-width: 600px) {
+    .checkout-form {
+        padding: 15px; /* Giảm padding trên di động */
+        margin: 20px 10px; /* Giảm margin trên di động */
+    }
+
+    .checkout-form h2 {
+        font-size: 20px; /* Giảm kích thước chữ tiêu đề */
+    }
+
+    .info-item label,
+    .info-item span,
+    .info-item textarea {
+        font-size: 14px; /* Giảm kích thước chữ */
+    }
+}
+/* Container chung cho giỏ hàng và thông tin thanh toán */
+.cart-container {
+    display: flex; /* Sử dụng flex để đặt hai phần ngang hàng */
+    justify-content: space-between; /* Căn cách đều giữa giỏ hàng và thông tin thanh toán */
+    align-items: flex-start; /* Căn trên cùng */
+    max-width: 1200px; /* Giới hạn chiều rộng tối đa */
+    margin: 30px auto; /* Căn giữa */
+    padding: 0 20px; /* Khoảng cách bên trái và phải */
+}
+
+/* Định dạng phần giỏ hàng */
+.table_full {
+    flex: 1; /* Chiếm toàn bộ không gian có thể */
+    margin-right: 20px; /* Khoảng cách giữa giỏ hàng và thông tin thanh toán */
+}
+
+main.table {
+    width: 100%; /* Đảm bảo giỏ hàng chiếm toàn bộ chiều rộng của phần cha */
+    background-color: rgba(255, 255, 255, 0.9); /* Màu nền giống hình ảnh */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Bóng đổ nhẹ */
+    border-radius: 8px; /* Bo góc */
+    overflow: hidden;
+    font-size: 16px;
+    text-transform: uppercase;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Định dạng phần thông tin thanh toán */
+.checkout-form {
+    width: 400px; /* Chiều rộng cố định để giống hình ảnh */
+    background-color: #ffffff; /* Màu nền nhạt */
+    border-radius: 8px; /* Bo góc */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Bóng đổ nhẹ */
+    padding: 20px; /* Khoảng cách bên trong */
+    margin-top: 20px; /* Căn chỉnh trên cùng với giỏ hàng */
+}
+
+/* Định dạng tiêu đề "Thông tin thanh toán" */
+.checkout-form h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* Định dạng từng mục thông tin (info-item) */
+.info-item {
+    margin-bottom: 15px;
+}
+
+/* Định dạng label */
+.info-item label {
+    display: block;
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+/* Định dạng span (hiển thị thông tin người dùng) */
+.info-item span {
+    display: block;
+    padding: 8px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #333;
+    transition: border-color 0.3s ease;
+}
+
+/* Hiệu ứng hover cho span */
+.info-item span:hover {
+    border-color: #4CAF50;
+}
+
+/* Định dạng textarea (Ghi chú) */
+.info-item textarea {
+    width: 100%;
+    height: 80px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #333;
+    resize: vertical;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+/* Hiệu ứng focus cho textarea */
+.info-item textarea:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+/* Responsive: Điều chỉnh trên thiết bị di động */
+@media (max-width: 768px) {
+    .cart-container {
+        flex-direction: column; /* Xếp dọc trên di động */
+        align-items: center;
+    }
+
+    .table_full {
+        margin-right: 0; /* Bỏ khoảng cách bên phải */
+        margin-bottom: 20px; /* Thêm khoảng cách dưới */
+    }
+
+    .checkout-form {
+        width: 100%; /* Chiều rộng đầy đủ trên di động */
+        max-width: 600px; /* Giới hạn chiều rộng tối đa */
+    }
+}

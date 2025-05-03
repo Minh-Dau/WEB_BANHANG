@@ -1,0 +1,122 @@
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+.danhsach a{
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding-right: 10px;
+}
+.thea{
+    text-decoration: none;
+    color: rgb(65, 65, 65);
+    font-size: 20px;
+    margin-right: 40px;
+    margin-left: -15px;
+}
+.main{
+    margin-right: 60px;
+    border: 1px;
+}
+.thea:hover{
+    color:  black;
+}
+.thea > a {
+    color: inherit; /* Kế thừa màu chữ từ class cha */
+}
+.thecon a{
+    color: rgb(255, 255, 255);
+}
+.danhsach{
+    margin-left: -500px;
+}
+header{
+    background-color: rgb(255, 255, 255);
+    display: flex; /*Nằm cùng hàng*/
+    justify-content: space-between; /*Chia ảnh - Text - Button ra đều*/
+    align-content: center;
+    padding: 25px 10%;
+    text-decoration: none; /*Loại bỏ gạch chân*/ 
+}
+.main ul{
+    display: inline-flex; /*Cho các TEXT nằm cùng hàng*/
+    list-style: none; /*Bỏ các mục của list*/
+}
+.main ul li{
+    padding: 10px;
+}
+/*------------------------------------------------------------------*/
+/*------------------HIỆU ỨNG THẺ A*/
+.thea::after{
+    content: ''; /*Đặt chuỗi rỗng*/
+    width: 0; /*Độ dài thanh ngang ban đầu*/
+    height: 2px; /*Độ cao thanh ngang*/
+    background-color:  rgb(0, 0, 0);
+    border-radius: 45px;
+    margin: auto; /*Căn giữa chữ*/
+    display: block; /*Chiều ngang chiếm hết text*/
+}
+.thea:hover::after{
+    width: 100%; /*Khi đưa chuột vào đường ngang sẽ chạy đều với text*/
+    transition: all 0.3s ease 0s;
+}
+/*------------------------------------------------------------------*/
+/*------------------MỤC SHOP*/
+.muccon{
+    display: none; /*Ẩn*/
+}
+.main ul li:hover .muccon{
+    display: block; /*Đứng ở 1 hàng độc lập so với SHOP*/
+    position: absolute; /*Đặt lại vị trí các mục con*/
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 15px;
+    margin-top: 10px; /*Khoảng cách từ SHOP -> các mục con*/
+    margin-left: -10px;
+} 
+.main ul li:hover .muccon ul{
+    display: block; /*Các thành phần ul sẽ đứng 1 hàng độc lập*/
+}
+.main ul li:hover .muccon ul li{
+    width: 150px; /*Chiều dài nền các mục con*/
+    padding-bottom: 20px;
+    text-align: left;
+}
+/*------------------------------------------------------------------*/
+.imgLogo {
+    display: block;
+    text-align: center;
+    width: 30%;
+    padding-top: 12px;
+    justify-content: center;
+    padding: 10px;
+}
+button{
+    font-size: 20px;
+    margin-top: 15px;
+    margin-right: 1px;
+    margin-bottom: 5px;
+    padding: 10px 50%;
+    background-color: rgb(65, 65, 65);
+    color: white;
+    border: none;
+    border-radius: 45px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgb(0, 0, 0);
+}
+button:hover{
+    background-color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
+    box-shadow: 0 0 20px rgb(0, 0, 0);
+}
+.shopping{
+    margin-top: 5px;
+}
+.shopping, .login {
+    display: inline-block;
+    font-size: 30px;
+    vertical-align: middle; /* Để căn giữa theo chiều dọc */
+    margin-right: 30px; /* Khoảng cách giữa chúng */
+}

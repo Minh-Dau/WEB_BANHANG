@@ -1,0 +1,146 @@
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+#trangdangnhap{
+    padding-top: 20px;
+    border: 0.2px rgb(240, 234, 234) solid;
+    width: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    padding-bottom: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.totalQuantity{
+    position: fixed;
+    top: 0;
+    right: 0;
+    font-size: 15px;
+    background-color: #b31010;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: translateX(20px);
+    margin-right: 333px;
+    margin-top: 38px;
+}
+.hienthimatkhau{
+    display: flex;
+    justify-content: right;
+}
+h2{
+    font-size: 30px;
+    text-align: center;
+    margin-left: 20px;
+    margin-right: 5px;
+    filter: drop-shadow(2px 5px 10px #8f8181);
+}
+.haydangnhap{
+    text-align: center;
+    font-size: 24px;
+    margin-left: 5px;
+    padding-bottom: 10px;
+}
+.gg{
+    margin-left: 55px;
+    text-align: center;
+}
+.thep{
+    padding-top: 10px;
+    padding-bottom: 13px;
+}
+.fb{
+    margin-left: 115px;
+}
+.cha{
+    position: relative;
+}
+span{
+    color: red;
+}
+a{
+    color: rgb(0, 0, 0);
+    text-decoration: none;
+}
+.click{
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+.click:hover{
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+}
+.input-group_gmail{
+    font: inherit;
+    color: #201e1e;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    outline: 1px solid #201e1e;
+    background-color: transparent;
+    transition: outline-color 500ms;
+    margin-bottom: 15px;
+    width: 550px;
+}
+.input-group_gmail:focus,.input-group_gmail:valid{
+    outline-color: rgb(22, 133, 133);
+}
+.input-group_label_gmail{
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translate(10px,10px);
+    transition: transform 500ms,scale 500ms;
+}
+.input-group_gmail:focus+.input-group_label_gmail,.input-group_gmail:valid+.input-group_label_gmail{
+    transform: translate(10px,-14px) scale(0.8);
+    background-color: #ffffff;
+}
+.input-group_matkhau{
+    font: inherit;
+    color: #201e1e;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    outline: 1px solid #201e1e;
+    background-color: transparent;
+    transition: outline-color 500ms;
+    margin-bottom: 5px;
+    position: relative;
+    width: 550px;
+}
+.input-group_label_matkhau{
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translate(10px, 10px);
+    transition: transform 500ms, scale 500ms;
+}
+.input-group_matkhau:focus,.input-group_matkhau:valid{
+    outline-color: rgb(22, 133, 133);
+}
+.input-group_matkhau:focus+.input-group_label_matkhau,.input-group_matkhau:valid+.input-group_label_matkhau{
+    transform: translate(10px,-14px)scale(0.8);
+    background-color: #ffffff;
+}
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10%;
+    margin-right: 10px;
+    object-fit: cover;
+}
+
+
