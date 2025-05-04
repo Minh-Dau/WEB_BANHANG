@@ -57,6 +57,7 @@ if (!hasPermission($user_id, 'add_user')) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $hoten      = isset($_POST['hoten']) ? trim($_POST['hoten']) : '';
     $username   = isset($_POST['username']) ? trim($_POST['username']) : '';
     $email      = isset($_POST['email']) ? trim($_POST['email']) : '';
     $password   = isset($_POST['password']) ? trim($_POST['password']) : '';
@@ -81,6 +82,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     // Kiểm tra dữ liệu nhập vào
+    if (empty($hoten)) {
+        echo json_encode(["status" => "error", "message" => "Họ tên không được để trống"]);
+        exit;
+    }
+    if (strlen($hoten) > 50) {
+        echo json_encode(["status" => "error", "message" => "Họ tên không được dài quá 50 ký tự"]);
+        exit;
+    }
     if (empty($username)) {
         echo json_encode(["status" => "error", "message" => "Tên người dùng không được để trống"]);
         exit;
@@ -122,6 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
     }
+
     // Kiểm tra username trùng lặp
     $sql_check_username = "SELECT id FROM frm_dangky WHERE username = ?";
     $stmt_check_username = $conn->prepare($sql_check_username);
@@ -134,6 +144,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
     $stmt_check_username->close();
+
     // Xử lý tải ảnh
     $anh = null;
     if (isset($_FILES['anh']) && $_FILES['anh']['error'] == 0) {
@@ -153,15 +164,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
     }
+
+    // Mã hóa mật khẩu
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $sql = "INSERT INTO frm_dangky (username, email, password, phanquyen, sdt, diachi, anh, trangthai)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+    // Thêm người dùng vào cơ sở dữ liệu (bao gồm hoten)
+    $sql = "INSERT INTO frm_dangky (username, hoten, email, password, phanquyen, sdt, diachi, anh, trangthai)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         echo json_encode(["status" => "error", "message" => "Prepare failed: " . $conn->error]);
         exit;
     }
-    $stmt->bind_param("ssssssss", $username, $email, $hashedPassword, $phanquyen, $sdt, $diachi, $anh, $trangthai);
+    $stmt->bind_param("sssssssss", $username, $hoten, $email, $hashedPassword, $phanquyen, $sdt, $diachi, $anh, $trangthai);
 
     if ($stmt->execute()) {
         echo json_encode(["status" => "success", "message" => "Thêm người dùng thành công!"]);

@@ -64,6 +64,7 @@ error_reporting(E_ALL);
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Sanitize and validate input
     $id         = isset($_POST['id']) ? (int)$_POST['id'] : null;
+    $hoten      = isset($_POST['hoten']) ? trim($_POST['hoten']) : '';
     $username   = isset($_POST['username']) ? trim($_POST['username']) : '';
     $email      = isset($_POST['email']) ? trim($_POST['email']) : '';
     $sdt        = isset($_POST['sdt']) ? trim($_POST['sdt']) : null;
@@ -84,6 +85,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Kiểm tra ID
     if (empty($id)) {
         echo json_encode(["status" => "error", "message" => "ID không hợp lệ"]);
+        exit;
+    }
+
+    // Kiểm tra họ tên
+    if (empty($hoten)) {
+        echo json_encode(["status" => "error", "message" => "Họ tên không được để trống"]);
+        exit;
+    }
+    if (strlen($hoten) > 50) {
+        echo json_encode(["status" => "error", "message" => "Họ tên không được dài quá 50 ký tự"]);
         exit;
     }
 
@@ -189,24 +200,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (!empty($password)) {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         $sql = "UPDATE frm_dangky
-                SET username=?, email=?, sdt=?, diachi=?, phanquyen=?, trangthai=?, anh=?, password=?
+                SET username=?, hoten=?, email=?, sdt=?, diachi=?, phanquyen=?, trangthai=?, anh=?, password=?
                 WHERE id=?";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             echo json_encode(["status" => "error", "message" => "Prepare failed: " . $conn->error]);
             exit;
         }
-        $stmt->bind_param("ssssssssi", $username, $email, $sdt, $diachi, $phanquyen, $trangthai, $anh, $hashedPassword, $id);
+        $stmt->bind_param("sssssssssi", $username, $hoten, $email, $sdt, $diachi, $phanquyen, $trangthai, $anh, $hashedPassword, $id);
     } else {
         $sql = "UPDATE frm_dangky
-                SET username=?, email=?, sdt=?, diachi=?, phanquyen=?, trangthai=?, anh=?
+                SET username=?, hoten=?, email=?, sdt=?, diachi=?, phanquyen=?, trangthai=?, anh=?
                 WHERE id=?";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             echo json_encode(["status" => "error", "message" => "Prepare failed: " . $conn->error]);
             exit;
         }
-        $stmt->bind_param("sssssssi", $username, $email, $sdt, $diachi, $phanquyen, $trangthai, $anh, $id);
+        $stmt->bind_param("ssssssssi", $username, $hoten, $email, $sdt, $diachi, $phanquyen, $trangthai, $anh, $id);
     }
 
     // Thực thi truy vấn

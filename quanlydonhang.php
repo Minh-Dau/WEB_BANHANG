@@ -381,6 +381,11 @@ $conn->close();
                                             $buttonText = "Đã giao";
                                             $disabled = "disabled";
                                         }
+                                        if ($trangthai == "Đã hủy") {
+                                            $buttonText = "Đã hủy";
+                                            $buttonClass = "btn btn-danger btn-sm"; 
+                                            $disabled="disabled";
+                                        }
                                         echo "<button class='$buttonClass' $disabled
                                         data-id='" . $row["id"] . "'
                                         data-trangthai='" . $trangthai . "'>
@@ -706,20 +711,22 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Xử lý lọc đơn hàng theo trạng thái
-    statusFilter.addEventListener('change', function () {
-        const selectedStatus = this.value;
+   statusFilter.addEventListener('change', function () {
+    const selectedStatus = this.value;
+    console.log("Selected Status:", selectedStatus);
 
-        tableRows.forEach(row => {
-            const statusCell = row.children[2]; 
-            const rowStatus = statusCell.textContent.trim();
+    tableRows.forEach(row => {
+        const statusCell = row.children[2]; 
+        const rowStatus = statusCell.textContent.trim();
+        console.log("Row Status:", rowStatus);
 
-            if (selectedStatus === '' || rowStatus === selectedStatus) {
-                row.style.display = ''; // Hiển thị hàng
-            } else {
-                row.style.display = 'none'; // Ẩn hàng
-            }
-        });
+        if (selectedStatus === '' || rowStatus === selectedStatus) {
+            row.style.display = ''; // Hiển thị hàng
+        } else {
+            row.style.display = 'none'; // Ẩn hàng
+        }
     });
+});
 });
 </script>
 <!-- Bao gồm SweetAlert2 -->
@@ -796,9 +803,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             function maskPhoneNumber(phone) {
-                return phone.slice(0, 5) + "*****";
+                return phone;
             }
-
             function maskEmail(email) {
                 let parts = email.split("@");
                 return parts[0].length > 3 ? parts[0].slice(0, 3) + "*****@" + parts[1] : "*****@" + parts[1];

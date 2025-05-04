@@ -12,6 +12,7 @@ include 'config.php';
 
 $new_review_count = 0;
 $new_order_count = 0; // Biến để lưu số đơn hàng chưa in
+$new_pending_orders = 0; // Biến để lưu số đơn hàng chưa giao
 $notifications = [];
 
 // Truy vấn số lượng đánh giá chưa duyệt
@@ -43,6 +44,17 @@ if ($result_orders === false) {
 }
 if ($result_orders->num_rows > 0) {
     $new_order_count = $result_orders->fetch_assoc()['count'];
+}
+
+// Truy vấn số lượng đơn hàng chưa giao
+$sql_pending_orders = "SELECT COUNT(*) as count FROM oder WHERE trangthai != 'Đã giao'";
+$result_pending_orders = $conn->query($sql_pending_orders);
+if ($result_pending_orders === false) {
+    echo "Lỗi SQL (đơn hàng chưa giao): " . $conn->error;
+    exit;
+}
+if ($result_pending_orders->num_rows > 0) {
+    $new_pending_orders = $result_pending_orders->fetch_assoc()['count'];
 }
 
 // Xử lý duyệt đánh giá (nếu có)
@@ -131,7 +143,6 @@ $password = "";
 $dbname = "webbanhang"; 
 $total_products = 0;
 $total_users = 0;
-$total_discount_codes = 0;
 $total_profit = 0;
 try {
     $conn = new mysqli($servername, $hoten, $password, $dbname);
@@ -147,11 +158,6 @@ try {
     if ($result_users && $result_users->num_rows > 0) {
         $row_users = $result_users->fetch_assoc();
         $total_users = $row_users['total_users'] ?? 0;
-    }
-    $result_discount_codes = $conn->query("SELECT COUNT(*) AS total_discount_codes FROM discount_codes");
-    if ($result_discount_codes && $result_discount_codes->num_rows > 0) {
-        $row_discount_codes = $result_discount_codes->fetch_assoc();
-        $total_discount_codes = $row_discount_codes['total_discount_codes'] ?? 0;
     }
     $query_profit = "
         SELECT 
@@ -305,9 +311,9 @@ try {
                     </div>
                     <div class="col-xl-3 col-md-6">
                         <div class="card bg-success text-white mb-4">
-                            <div class="card-body">Mã giảm giá: <?php echo number_format($total_discount_codes, 0, ',', '.'); ?></div>
+                            <div class="card-body">Số lượng đơn hàng chưa giao: <?php echo number_format($new_pending_orders, 0, ',', '.'); ?></div>
                             <div class="card-footer d-flex align-items-center justify-content-between">
-                                <a class="small text-white stretched-link" href="quanly_khuyenmai.php">Quản lý</a>
+                                <a class="small text-white stretched-link" href="quanlydonhang.php">Quản lý</a>
                                 <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                             </div>
                         </div>
@@ -895,7 +901,6 @@ try {
                                             $top_products_totals[] = (int)$row['total_sold'];
                                         }
                                     } else {
-                                        $top_products_labels = ['Không có dữ liệu'];
                                         $top_products_data = [0];
                                         $top_products_totals = [0];
                                     }
@@ -1094,7 +1099,6 @@ try {
                                             $top_customers_totals[] = (float)$row['total_spent'];
                                         }
                                     } else {
-                                        $top_customers_labels = ['Không có dữ liệu'];
                                         $top_customers_data = [0];
                                         $top_customers_totals = [0];
                                     }
@@ -1233,7 +1237,7 @@ try {
                             <thead>
                                 <tr>
                                     <th>Email</th>
-                                    <th>hoten</th>
+                                    <th>Họ tên</th>
                                     <th>Số điện thoại</th>
                                     <th>Địa chỉ</th>
                                     <th>Tổng tiền</th>
@@ -1242,7 +1246,7 @@ try {
                             <tfoot>
                                 <tr>
                                     <th>Email</th>
-                                    <th>hoten</th>
+                                    <th>Họ tên</th>
                                     <th>Số điện thoại</th>
                                     <th>Địa chỉ</th>
                                     <th>Tổng tiền</th>
@@ -1260,7 +1264,7 @@ try {
                                     if ($result_users && $result_users->num_rows > 0) {
                                         while ($row = $result_users->fetch_assoc()) {
                                             $user_id = $row['id'];
-                                            $sql_total = "SELECT SUM(total) AS total_spent FROM `oder` WHERE user_id = $user_id";
+                                            $sql_total = "SELECT SUM(total) AS total_spent FROM `oder` WHERE user_id = $user_id AND trangthai = 'Đã giao'";
                                             $result_total = $conn->query($sql_total);
                                             $total_spent = 0;
                                             if ($result_total && $result_total->num_rows > 0) {

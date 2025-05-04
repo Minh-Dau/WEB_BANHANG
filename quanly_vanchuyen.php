@@ -289,7 +289,13 @@ $conn->close();
                                             echo "<tr>";
                                             echo "<td>" . htmlspecialchars($row["method_name"]) . "</td>";
                                             echo "<td>" . number_format($row["cost"], 0, ',', '.') . " VND</td>";
-                                            echo "<td>" . htmlspecialchars($row["description"]) . "</td>";
+                                            $desc = htmlspecialchars($row["description"] ?? '');
+                                            $words = explode(' ', $desc);
+                                            $shortDesc = implode(' ', array_slice($words, 0, 15));
+                                            if (count($words) > 15) {
+                                                $shortDesc .= '...';
+                                            }
+                                            echo "<td>" . $shortDesc . "</td>";
                                             echo "<td>" . $row["create_at"] . "</td>";
                                             echo "<td>" . $row["update_at"] . "</td>";
                                             echo "<td>

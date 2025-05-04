@@ -251,6 +251,7 @@ $conn->close();
                             <table id="datatablesSimple">
                                 <thead>
                                     <tr>
+                                        <th>Tài khoản</th>
                                         <th>Tên</th>
                                         <th>Ảnh</th>
                                         <th>Email</th>
@@ -263,6 +264,7 @@ $conn->close();
                                 </thead>
                                 <tfoot>
                                     <tr>
+                                        <th>Tài khoản</th>
                                         <th>Tên</th>
                                         <th>Ảnh</th>
                                         <th>Email</th>
@@ -282,11 +284,18 @@ $conn->close();
                                         while ($row = $result->fetch_assoc()) {
                                             echo "<tr>";
                                             echo "<td>" . htmlspecialchars($row["username"]) . "</td>";
+                                            echo "<td>" . htmlspecialchars($row["hoten"]) . "</td>";
                                             echo "<td><img src='" . htmlspecialchars($row["anh"] ?? '/images/default.jpg') . "' width='50' height='50' onerror=\"this.onerror=null; this.src='/images/default.jpg';\"></td>";
                                             echo "<td>" . htmlspecialchars($row["email"]) . "</td>";
                                             echo "<td>" . htmlspecialchars($row["phanquyen"]) . "</td>";
                                             echo "<td>" . htmlspecialchars($row["sdt"] ?? '') . "</td>";
-                                            echo "<td>" . htmlspecialchars($row["diachi"] ?? '') . "</td>";
+                                            $diachi = htmlspecialchars($row["diachi"] ?? '');
+                                            $words = explode(' ', $diachi);
+                                            $shortened = implode(' ', array_slice($words, 0, 15));
+                                            if (count($words) > 15) {
+                                                $shortened .= '...';
+                                            }
+                                            echo "<td>" . $shortened . "</td>";
                                             echo "<td>" . ($row["trangthai"] == "hoạt động" 
                                                 ? "<span style='color: green; font-size: 20px;'>●</span> Hoạt Động" 
                                                 : "<span style='color: red; font-size: 20px;'>●</span> Bị Khóa") . "</td>";
@@ -294,6 +303,7 @@ $conn->close();
                                                 <button class='btn btn-warning btn-sm edit-btn'
                                                     data-id='" . $row["id"] . "'
                                                     data-username='" . htmlspecialchars($row["username"]) . "'
+                                                    data-hoten='" . htmlspecialchars($row["hoten"]) . "'
                                                     data-email='" . htmlspecialchars($row["email"]) . "'
                                                     data-sdt='" . htmlspecialchars($row["sdt"] ?? '') . "'
                                                     data-diachi='" . htmlspecialchars($row["diachi"] ?? '') . "'
@@ -304,13 +314,8 @@ $conn->close();
                                                     data-bs-target='#editUserModal'>
                                                     <i class='fas fa-edit'></i>
                                                 </button>";
-
-                                            // Lấy vai trò của người dùng đang đăng nhập
                                             $loggedInRole = isset($_SESSION['user']['phanquyen']) ? $_SESSION['user']['phanquyen'] : '';
-                                            // Lấy vai trò của người dùng mục tiêu
                                             $targetRole = $row["phanquyen"];
-
-                                            // Chỉ cho phép admin nhấn nút nếu người dùng mục tiêu là nhanvien
                                             if (($loggedInRole === 'admin' || $loggedInRole === 'nhanvien') && $targetRole === 'nhanvien') {
                                                 echo "<button class='btn btn-info btn-sm permission-btn'
                                                             data-id='" . $row["id"] . "'
@@ -359,12 +364,16 @@ $conn->close();
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
+                            <label for="hoten" class="form-label">Họ tên</label>
+                            <input type="text" class="form-control" id="hoten" name="hoten" required maxlength="50">
+                        </div>
+                        <div class="mb-3">
                             <label for="username" class="form-label">Tên đăng nhập</label>
                             <input type="text" class="form-control" id="username" name="username" required maxlength="20" minlength="6">
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label">Mật khẩu</label>
-                            <input type="password" class="form-control" id="password" name="password" required >
+                            <input type="password" class="form-control" id="password" name="password" required>
                         </div>
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
@@ -438,6 +447,10 @@ $conn->close();
                 <form id="editUserForm" action="update_nguoidung.php" method="POST" enctype="multipart/form-data">
                     <div class="modal-body">
                         <input type="hidden" name="id" id="edit-id">
+                        <div class="mb-3">
+                            <label for="edit-hoten" class="form-label">Họ tên</label>
+                            <input type="text" class="form-control" name="hoten" id="edit-hoten" required maxlength="50">
+                        </div>
                         <div class="mb-3">
                             <label for="edit-username" class="form-label">Tên người dùng</label>
                             <input type="text" class="form-control" name="username" id="edit-username" required>
@@ -764,6 +777,7 @@ document.addEventListener("DOMContentLoaded", function () {
     editButtons.forEach(button => {
         button.addEventListener("click", function () {
             document.getElementById("edit-id").value = this.dataset.id;
+            document.getElementById("edit-hoten").value = this.dataset.hoten;
             document.getElementById("edit-username").value = this.dataset.username;
             document.getElementById("edit-email").value = this.dataset.email;
             document.getElementById("edit-sdt").value = this.dataset.sdt || '';

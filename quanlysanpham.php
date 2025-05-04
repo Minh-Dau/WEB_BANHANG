@@ -133,6 +133,8 @@ $conn->close();
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.x/css/all.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
     </head>
     <style>
         .switch {
@@ -177,7 +179,58 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(20px);
 }
+    /* Toggle Switch Styling */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 42px;
+        height: 22px;
+    }
 
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0;
+        right: 0; bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: #0d6efd;
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(20px);
+    }
+
+    /* Fix for align-middle */
+    .table td, .table th {
+        vertical-align: middle;
+    }
+
+    .gap-2 {
+        gap: 0.5rem !important;
+    }
     </style>
     <body class="sb-nav-fixed">
         <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
@@ -425,85 +478,82 @@ input:checked + .slider:before {
                     </div>
                 </div>
             </div>
-            <!-- Modal Quản lý Danh mục -->
-            <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg"> <!-- Tăng kích thước modal để chứa bảng -->
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="addCategoryModalLabel">Quản lý danh mục</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <h6>Thêm danh mục mới</h6>
-                            <form id="addCategoryForm">
-                                <div class="mb-3">
-                                    <label for="add-tendanhmuc" class="form-label">Tên danh mục</label>
-                                    <input type="text" class="form-control" name="tendanhmuc" id="add-tendanhmuc" required>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Thêm</button>
-                            </form>
-                            <hr>
-                            <h6>Danh sách danh mục</h6>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Tên danh mục</th>
-                                        <th>Trạng thái</th>
-                                        <th>Hành động</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                <?php
-                                include 'config.php';
-                                $sql = "SELECT id, tendanhmuc, trangthai FROM danhmuc";
-                                $result = $conn->query($sql);
-                                if ($result->num_rows > 0) {
-                                    while ($row = $result->fetch_assoc()) {
-                                        $trangthai = $row["trangthai"] == "Hiển thị" ? "Hiển thị" : "Ẩn";
-                                        $isChecked = $row["trangthai"] == "Hiển thị" ? "checked" : "";
-
-                                        echo "<tr>";
-                                        echo "<td>" . $row["id"] . "</td>";
-                                        echo "<td>" . $row["tendanhmuc"] . "</td>";
-                                        echo "<td>" . $trangthai . "</td>";
-                                        echo "<td>
-                                            <button class='btn btn-warning btn-sm edit-category-btn' 
-                                                    data-id='" . $row["id"] . "' 
-                                                    data-tendanhmuc='" . $row["tendanhmuc"] . "' 
-                                                    data-bs-toggle='modal' 
-                                                    data-bs-target='#editCategoryModal'>
-                                                <i class='fas fa-edit'></i>
-                                            </button>
-                                            
-                                            <button class='btn btn-danger btn-sm delete-category-btn' 
-                                                    data-id='" . $row["id"] . "'>
-                                                <i class='fas fa-trash'></i>
-                                            </button>
-                                            
-                                            <div class='btn btn-sm p-0 d-inline-block align-middle' style='width: 50px; height: 25px;'>
-                                                <label class='switch m-0' style='vertical-align: middle;'>
-                                                    <input type='checkbox' class='toggle-category' data-id='" . $row["id"] . "' $isChecked>
-                                                    <span class='slider'></span>
-                                                </label>
-                                            </div>
-                                        </td>";
-                                        echo "</tr>";
-                                    }
-                                } else {
-                                    echo "<tr><td colspan='4'>Không có danh mục nào</td></tr>";
-                                }
-                                $conn->close();
-                                ?>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                        </div>
-                    </div>
-                </div>
+            <!-- Modal Quản lý danh mục -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">Quản lý danh mục</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <div class="modal-body">
+                <h6>Thêm danh mục mới</h6>
+                <form id="addCategoryForm">
+                    <div class="mb-3">
+                        <label for="add-tendanhmuc" class="form-label">Tên danh mục</label>
+                        <input type="text" class="form-control" name="tendanhmuc" id="add-tendanhmuc" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Thêm</button>
+                </form>
+                <hr>
+                <h6>Danh sách danh mục</h6>
+                <table class="table table-bordered align-middle text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 30%;">Tên danh mục</th>
+                            <th style="width: 20%;">Trạng thái</th>
+                            <th style="width: 50%;">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php
+                    include 'config.php';
+                    $sql = "SELECT id, tendanhmuc, trangthai FROM danhmuc";
+                    $result = $conn->query($sql);
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {
+                            $trangthai = $row["trangthai"] == "Hiển thị" ? "Hiển thị" : "Ẩn";
+                            $isChecked = $row["trangthai"] == "Hiển thị" ? "checked" : "";
+                            echo "<tr>";
+                            echo "<td>" . $row["tendanhmuc"] . "</td>";
+                            echo "<td>" . $trangthai . "</td>";
+                            echo "<td>
+                                <div class='d-flex justify-content-center align-items-center gap-2'>
+                                    <button class='btn btn-warning btn-sm edit-category-btn' 
+                                            data-id='" . $row["id"] . "' 
+                                            data-tendanhmuc='" . $row["tendanhmuc"] . "' 
+                                            data-bs-toggle='modal' 
+                                            data-bs-target='#editCategoryModal'>
+                                        <i class='fas fa-edit'></i>
+                                    </button>
+
+                                    <button class='btn btn-danger btn-sm delete-category-btn' 
+                                            data-id='" . $row["id"] . "'>
+                                        <i class='fas fa-trash'></i>
+                                    </button>
+
+                                    <label class='switch'>
+                                        <input type='checkbox' class='toggle-category' data-id='" . $row["id"] . "' $isChecked>
+                                        <span class='slider'></span>
+                                    </label>
+                                </div>
+                            </td>";
+                            echo "</tr>";
+                        }
+                    } else {
+                        echo "<tr><td colspan='3'>Không có danh mục nào</td></tr>";
+                    }
+                    $conn->close();
+                    ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
             <!-- Modal Chỉnh sửa Danh mục -->
                 <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
