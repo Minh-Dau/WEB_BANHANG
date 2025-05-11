@@ -1,11 +1,93 @@
 <?php
 session_start();
 
+require 'vendor/autoload.php'; // Tải PhpSpreadsheet
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 // Kiểm tra nếu chưa đăng nhập hoặc không phải admin hoặc nhân viên
 if (!isset($_SESSION['user']) || 
     ($_SESSION['user']['phanquyen'] !== 'admin' && $_SESSION['user']['phanquyen'] !== 'nhanvien')) {
     header("Location: dangnhap.php");
     exit();
+}
+
+// Xử lý xuất Excel
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['export_excel'])) {
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+    $dbname = "webbanhang";
+
+    try {
+        $conn = new mysqli($servername, $username, $password, $dbname);
+        if ($conn->connect_error) {
+            throw new Exception("Kết nối cơ sở dữ liệu thất bại: " . $conn->connect_error);
+        }
+
+        // Truy vấn dữ liệu người dùng
+        $sql = "SELECT id, email, hoten, sdt, diachi FROM frm_dangky WHERE phanquyen = 'user'";
+        $result_users = $conn->query($sql);
+
+        // Tạo file Excel
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Đặt tiêu đề cột
+        $sheet->setCellValue('A1', 'Email');
+        $sheet->setCellValue('B1', 'Họ tên');
+        $sheet->setCellValue('C1', 'Số điện thoại');
+        $sheet->setCellValue('D1', 'Địa chỉ');
+        $sheet->setCellValue('E1', 'Tổng tiền');
+
+        // Định dạng tiêu đề
+        $sheet->getStyle('A1:E1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:E1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Điền dữ liệu
+        $row = 2;
+        if ($result_users && $result_users->num_rows > 0) {
+            while ($user = $result_users->fetch_assoc()) {
+                $user_id = $user['id'];
+                // Tính tổng tiền
+                $sql_total = "SELECT SUM(total) AS total_spent FROM `oder` WHERE user_id = $user_id AND trangthai = 'Đã giao'";
+                $result_total = $conn->query($sql_total);
+                $total_spent = 0;
+                if ($result_total && $result_total->num_rows > 0) {
+                    $total_row = $result_total->fetch_assoc();
+                    $total_spent = $total_row['total_spent'] ?? 0;
+                }
+
+                // Ghi dữ liệu vào Excel
+                $sheet->setCellValue('A' . $row, $user['email']);
+                $sheet->setCellValue('B' . $row, $user['hoten']);
+                $sheet->setCellValue('C' . $row, $user['sdt']);
+                $sheet->setCellValue('D' . $row, $user['diachi']);
+                $sheet->setCellValue('E' . $row, number_format($total_spent, 0, ',', '.'));
+
+                $row++;
+            }
+        }
+
+        // Tự động điều chỉnh kích thước cột
+        foreach (range('A', 'E') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        // Xuất file
+        $filename = 'ThongKeNguoiDung_' . date('Ymd_His') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        $conn->close();
+        exit();
+    } catch (Exception $e) {
+        echo "<div style='color: red; padding: 10px;'>Lỗi: " . $e->getMessage() . "</div>";
+    }
 }
 
 include 'config.php';
@@ -47,15 +129,18 @@ if ($result_orders->num_rows > 0) {
 }
 
 // Truy vấn số lượng đơn hàng chưa giao
-$sql_pending_orders = "SELECT COUNT(*) as count FROM oder WHERE trangthai != 'Đã giao'";
+$sql_pending_orders = "SELECT COUNT(*) as count FROM oder WHERE trangthai NOT IN ('Đã giao', 'Đã hủy')";
 $result_pending_orders = $conn->query($sql_pending_orders);
+
 if ($result_pending_orders === false) {
     echo "Lỗi SQL (đơn hàng chưa giao): " . $conn->error;
     exit;
 }
+
 if ($result_pending_orders->num_rows > 0) {
     $new_pending_orders = $result_pending_orders->fetch_assoc()['count'];
 }
+
 
 // Xử lý duyệt đánh giá (nếu có)
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['review_id'])) {
@@ -74,6 +159,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['review_id'])) {
 }
 
 $conn->close();
+
+$servername = "localhost";
+$hoten = "root"; 
+$password = ""; 
+$dbname = "webbanhang"; 
+$total_products = 0;
+$total_users = 0;
+$total_profit = 0;
+try {
+    $conn = new mysqli($servername, $hoten, $password, $dbname);
+    if ($conn->connect_error) {
+        throw new Exception("Kết nối cơ sở dữ liệu thất bại: " . $conn->connect_error);
+    }
+    $result_products = $conn->query("SELECT SUM(soluong) AS total_remaining FROM sanpham");
+    if ($result_products && $result_products->num_rows > 0) {
+        $row_products = $result_products->fetch_assoc();
+        $total_products = $row_products['total_remaining'] ?? 0;
+    }
+    $result_users = $conn->query("SELECT COUNT(*) AS total_users FROM frm_dangky");
+    if ($result_users && $result_users->num_rows > 0) {
+        $row_users = $result_users->fetch_assoc();
+        $total_users = $row_users['total_users'] ?? 0;
+    }
+    $query_profit = "
+        SELECT 
+            SUM(profit) AS total_profit
+        FROM (
+            SELECT 
+                o.id,
+                o.total,
+                SUM(od.soluong * sp.gia_nhap) AS total_cost,
+                (o.total - SUM(od.soluong * sp.gia_nhap)) AS profit
+            FROM 
+                `oder` o
+            JOIN 
+                oder_detail od ON o.id = od.oder_id
+            JOIN 
+                sanpham sp ON od.sanpham_id = sp.id
+            WHERE 
+                o.trangthai = 'Đã giao'
+            GROUP BY 
+                o.id, o.total
+        ) AS subquery
+    ";
+    $result_profit = $conn->query($query_profit);
+    if ($result_profit && $result_profit->num_rows > 0) {
+        $row_profit = $result_profit->fetch_assoc();
+        $total_profit = $row_profit['total_profit'] ?? 0;
+    }
+    $conn->close();
+} catch (Exception $e) {
+    echo "<div style='color: red; padding: 10px;'>Lỗi: " . $e->getMessage() . "</div>";
+}
 ?>
 <!-- Phần thông báo admin -->
 <script>
@@ -136,60 +274,6 @@ $conn->close();
     }
 });
 </script>
-<?php
-$servername = "localhost";
-$hoten = "root"; 
-$password = ""; 
-$dbname = "webbanhang"; 
-$total_products = 0;
-$total_users = 0;
-$total_profit = 0;
-try {
-    $conn = new mysqli($servername, $hoten, $password, $dbname);
-    if ($conn->connect_error) {
-        throw new Exception("Kết nối cơ sở dữ liệu thất bại: " . $conn->connect_error);
-    }
-    $result_products = $conn->query("SELECT SUM(soluong) AS total_remaining FROM sanpham");
-    if ($result_products && $result_products->num_rows > 0) {
-        $row_products = $result_products->fetch_assoc();
-        $total_products = $row_products['total_remaining'] ?? 0;
-    }
-    $result_users = $conn->query("SELECT COUNT(*) AS total_users FROM frm_dangky");
-    if ($result_users && $result_users->num_rows > 0) {
-        $row_users = $result_users->fetch_assoc();
-        $total_users = $row_users['total_users'] ?? 0;
-    }
-    $query_profit = "
-        SELECT 
-            SUM(profit) AS total_profit
-        FROM (
-            SELECT 
-                o.id,
-                o.total,
-                SUM(od.soluong * sp.gia_nhap) AS total_cost,
-                (o.total - SUM(od.soluong * sp.gia_nhap)) AS profit
-            FROM 
-                `oder` o
-            JOIN 
-                oder_detail od ON o.id = od.oder_id
-            JOIN 
-                sanpham sp ON od.sanpham_id = sp.id
-            WHERE 
-                o.trangthai = 'Đã giao'
-            GROUP BY 
-                o.id, o.total
-        ) AS subquery
-    ";
-    $result_profit = $conn->query($query_profit);
-    if ($result_profit && $result_profit->num_rows > 0) {
-        $row_profit = $result_profit->fetch_assoc();
-        $total_profit = $row_profit['total_profit'] ?? 0;
-    }
-    $conn->close();
-} catch (Exception $e) {
-    echo "<div style='color: red; padding: 10px;'>Lỗi: " . $e->getMessage() . "</div>";
-}
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -242,12 +326,12 @@ try {
         <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
             <div class="sb-sidenav-menu">
                 <div class="nav">
-                    <div class="sb-sidenav-menu-heading">Core</div>
+                    <div class="sb-sidenav-menu-heading">Thống kê</div>
                     <a class="nav-link" href="admin.php">
                         <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                        QUẢN LÝ
+                        THỐNG KÊ
                     </a>
-                    <div class="sb-sidenav-menu-heading">Addons</div>
+                    <div class="sb-sidenav-menu-heading">Quản lý</div>
                     <a class="nav-link" href="quanlysanpham.php">
                         <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                         QUẢN LÝ SẢN PHẨM
@@ -257,20 +341,19 @@ try {
                         QUẢN LÝ NGƯỜI DÙNG
                     </a>
                     <a class="nav-link" href="quanlydonhang.php">
-                                <div class="sb-nav-link-icon">
-                                    <i class="fas fa-box"></i> 
-                                </div>
-                                QUẢN LÝ ĐƠN HÀNG
-                                <span id="orderCountBadge" class="badge bg-danger ms-2" style="display: none;">0</span>
-                            </a>
-                        <a class="nav-link" href="quanlydanhgia.php">
-                                <div class="sb-nav-link-icon">
-                                    <i class="fas fa-star"></i>
-                                   
-                                </div>
-                                QUẢN LÝ ĐÁNH GIÁ
-                                <span id="reviewCountBadge" class="badge bg-danger ms-2" style="display: none;">0</span>
-                            </a>
+                        <div class="sb-nav-link-icon">
+                            <i class="fas fa-box"></i> 
+                        </div>
+                        QUẢN LÝ ĐƠN HÀNG
+                        <span id="orderCountBadge" class="badge bg-danger ms-2" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-link" href="quanlydanhgia.php">
+                        <div class="sb-nav-link-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        QUẢN LÝ ĐÁNH GIÁ
+                        <span id="reviewCountBadge" class="badge bg-danger ms-2" style="display: none;">0</span>
+                    </a>
                     <a class="nav-link" href="quanly_vanchuyen.php">
                         <div class="sb-nav-link-icon"><i class="fas fa-truck"></i></div>
                         QUẢN LÝ VẬN CHUYỂN 
@@ -286,9 +369,9 @@ try {
     <div id="layoutSidenav_content">
         <main>
             <div class="container-fluid px-4">
-                <h1 class="mt-4">Quản Lý</h1>
+                <h1 class="mt-4">Thống kê</h1>
                 <ol class="breadcrumb mb-4">
-                    <li class="breadcrumb-item active">Quản Lý</li>
+                    <li class="breadcrumb-item active">Thống kê</li>
                 </ol>
                 <div class="row">
                     <div class="col-xl-3 col-md-6">
@@ -311,7 +394,7 @@ try {
                     </div>
                     <div class="col-xl-3 col-md-6">
                         <div class="card bg-success text-white mb-4">
-                            <div class="card-body">Số lượng đơn hàng chưa giao: <?php echo number_format($new_pending_orders, 0, ',', '.'); ?></div>
+                        <div class="card-body">Số lượng đơn hàng chưa giao: <?php echo number_format($new_pending_orders, 0, ',', '.'); ?></div>
                             <div class="card-footer d-flex align-items-center justify-content-between">
                                 <a class="small text-white stretched-link" href="quanlydonhang.php">Quản lý</a>
                                 <div class="small text-white"><i class="fas fa-angle-right"></i></div>
@@ -515,7 +598,7 @@ try {
                                             JOIN 
                                                 oder_detail od ON o.id = od.oder_id
                                             JOIN 
-                                                sanpham sp ON od.sanpham_id = sp.id
+                                                sanpham Sp ON od.sanpham_id = sp.id
                                             WHERE 
                                                 o.ngaydathang >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
                                                 AND o.ngaydathang <= CURDATE()
@@ -1231,6 +1314,9 @@ try {
                     <div class="card-header">
                         <i class="fas fa-table me-1"></i>
                         Thống kê người dùng mua hàng
+                        <form method="POST" action="" class="float-end">
+                            <button type="submit" name="export_excel" class="btn btn-success btn-sm">Xuất Excel</button>
+                        </form>
                     </div>
                     <div class="card-body">
                         <table id="datatablesSimple">
@@ -1280,11 +1366,11 @@ try {
                                             echo "</tr>";
                                         }
                                     } else {
-                                        echo "<tr><td colspan='6'>Không có người dùng nào có quyền 'user'</td></tr>";
+                                        echo "<tr><td colspan='5'>Không có người dùng nào có quyền 'user'</td></tr>";
                                     }
                                     $conn->close();
                                 } catch (Exception $e) {
-                                    echo "<tr><td colspan='6'>Lỗi: " . $e->getMessage() . "</td></tr>";
+                                    echo "<tr><td colspan='5'>Lỗi: " . $e->getMessage() . "</td></tr>";
                                 }
                                 ?>
                             </tbody>

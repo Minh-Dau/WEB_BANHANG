@@ -11,10 +11,8 @@ if (!isset($_SESSION['user']) ||
 include 'config.php';
 
 $new_review_count = 0;
-$new_order_count = 0; // Biến để lưu số đơn hàng chưa in
+$new_order_count = 0;
 $notifications = [];
-
-// Truy vấn số lượng đánh giá chưa duyệt
 $sql_reviews = "SELECT danhgia.id, danhgia.user_id, danhgia.sanpham_id, danhgia.created_at, 
                frm_dangky.hoten AS user_name, sanpham.tensanpham AS product_name 
         FROM danhgia 
@@ -182,12 +180,12 @@ $conn->close();
             <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                 <div class="sb-sidenav-menu">
                     <div class="nav">
-                        <div class="sb-sidenav-menu-heading">Core</div>
+                        <div class="sb-sidenav-menu-heading">Thống kê</div>
                         <a class="nav-link" href="admin.php">
                             <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                            QUẢN LÝ
+                            THỐNG KÊ
                         </a>
-                        <div class="sb-sidenav-menu-heading">Interface</div>
+                        <div class="sb-sidenav-menu-heading">Quản lý</div>
                         <a class="nav-link" href="quanlysanpham.php">
                             <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                             QUẢN LÝ SẢN PHẨM
@@ -233,7 +231,7 @@ $conn->close();
                 <div class="container-fluid px-4">
                     <h1 class="mt-4">QUẢN LÝ NGƯỜI DÙNG</h1>
                     <ol class="breadcrumb mb-4">
-                        <li class="breadcrumb-item"><a href="index.html">QUẢN LÝ</a></li>
+                        <li class="breadcrumb-item"><a href="http://localhost/BAOCAO/quanlynguoidung.php">QUẢN LÝ</a></li>
                         <li class="breadcrumb-item active">QUẢN LÝ NGƯỜI DÙNG</li>
                     </ol>
                     <div class="card mb-4">
@@ -278,7 +276,7 @@ $conn->close();
                                 <tbody>
                                     <?php
                                     include 'config.php';
-                                    $sql = "SELECT * FROM frm_dangky";
+                                    $sql = "SELECT * FROM frm_dangky ORDER BY id DESC";
                                     $result = $conn->query($sql);
                                     if ($result->num_rows > 0) {
                                         while ($row = $result->fetch_assoc()) {
@@ -584,16 +582,20 @@ $conn->close();
                                 <input class="form-check-input" type="checkbox" value="delete_user" id="delete_user">
                                 <label class="form-check-label" for="delete_user">Xóa người dùng</label>
                             </div>
-                            <div class="form-check form-switch">
+                            <!-- <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" value="permission" id="permission">
                                 <label class="form-check-label" for="permission">Phân quyền</label>
-                            </div>
+                            </div> -->
                         </div>
-                        <h6>Đơn hàng</h6>
+                        <h6>Quản lý đơn hàng</h6>
                         <div class="d-flex flex-row">
+                            <div class="form-check form-switch me-3">
+                                <input class="form-check-input" type="checkbox" value="manage_order_status" id="manage_order_status">
+                                <label class="form-check-label" for="manage_order_status">Thay đổi trạng thái đơn hàng</label>
+                            </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" value="manage_order" id="manage_order">
-                                <label class="form-check-label" for="manage_order">Quản lý đơn hàng</label>
+                                <input class="form-check-input" type="checkbox" value="print_invoice" id="print_invoice">
+                                <label class="form-check-label" for="print_invoice">In hóa đơn</label>
                             </div>
                         </div>
                         <h6>Đánh giá</h6>

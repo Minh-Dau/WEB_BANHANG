@@ -131,7 +131,7 @@ if (isset($_SESSION['username']) && isset($_POST['buy_now'])) {
                     <div class="sdt">
                         <span>Gọi đặt mua 0122112211 8:00-22:00</span>
                     </div>
-                    <hr width="380px">
+                    <hr width="100%">
                 </div>       
             </td>
         </tr>
@@ -272,7 +272,7 @@ if (isset($_SESSION['username']) && isset($_POST['buy_now'])) {
             <p>Mô tả sản phẩm</p>
         </div>
         <div class="motasanpham">
-            <p class="mota_sp"><?= htmlspecialchars($product['noidungsanpham']) ?></p>
+            <p class="mota_sp"><?= nl2br(htmlspecialchars($product['noidungsanpham'])) ?></p>
         </div>
 
         <div class="rv-review-list">

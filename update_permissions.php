@@ -118,7 +118,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['user_id']) && isset($
             $stmt_delete->execute();
             $stmt_delete->close();
         }
-
         echo json_encode(["status" => "success", "message" => "Phân quyền đã được cập nhật"]);
     } else {
         echo json_encode(["status" => "error", "message" => "Chỉ admin hoặc nhân viên có thể phân quyền cho nhân viên!"]);

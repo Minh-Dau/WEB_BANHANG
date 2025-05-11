@@ -255,12 +255,12 @@ input:checked + .slider:before {
                 <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                     <div class="sb-sidenav-menu">
                         <div class="nav">
-                            <div class="sb-sidenav-menu-heading">Core</div>
+                            <div class="sb-sidenav-menu-heading">Thống kê</div>
                             <a class="nav-link" href="admin.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                                QUẢN LÝ
+                                THỐNG KÊ
                             </a>
-                            <div class="sb-sidenav-menu-heading">Addons</div>
+                            <div class="sb-sidenav-menu-heading">Quản lý</div>
                             <a class="nav-link" href="quanlysanpham.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                                 QUẢN LÝ SẢN PHẨM
@@ -307,7 +307,7 @@ input:checked + .slider:before {
                     <div class="container-fluid px-4">
                         <h1 class="mt-4">QUẢN LÝ SẢN PHẨM</h1>
                         <ol class="breadcrumb mb-4">
-                            <li class="breadcrumb-item"><a href="index.html">QUẢN LÝ</a></li>
+                            <li class="breadcrumb-item"><a href="http://localhost/BAOCAO/quanlysanpham.php">QUẢN LÝ</a></li>
                             <li class="breadcrumb-item active">QUẢN LÝ SẢN PHẨM</li>
                         </ol>
                         <div class="card mb-4">
@@ -351,9 +351,10 @@ input:checked + .slider:before {
                                         <?php
                                         include 'config.php';
                                         $sql = "SELECT sp.id, sp.tensanpham, sp.img, sp.gia_nhap, sp.gia, sp.soluong, 
-                                                    sp.noidungsanpham, sp.trangthai, dm.tendanhmuc 
-                                                FROM sanpham sp
-                                                JOIN danhmuc dm ON sp.danhmuc_id = dm.id";  // Thay vì lấy loaisanpham, ta lấy tendanhmuc từ bảng danhmuc
+                                            sp.noidungsanpham, sp.trangthai, dm.tendanhmuc 
+                                        FROM sanpham sp
+                                        JOIN danhmuc dm ON sp.danhmuc_id = dm.id 
+                                        ORDER BY sp.id DESC";  // Thay vì lấy loaisanpham, ta lấy tendanhmuc từ bảng danhmuc
 
                                         $result = $conn->query($sql);
                                         if ($result->num_rows > 0) {
@@ -779,6 +780,17 @@ document.addEventListener("DOMContentLoaded", function () {
     <script>
     document.getElementById("addProductForm").addEventListener("submit", function (e) {
         e.preventDefault(); // Ngăn form submit mặc định
+        let giaNhap = parseFloat(document.getElementById("add-gia_nhap").value);
+        let giaBan = parseFloat(document.getElementById("add-gia").value);
+
+        if (giaNhap >= giaBan) {
+            Swal.fire({
+                title: "Lỗi!",
+                text: "Giá nhập không được lớn hơn hoặc bằng giá bán!",
+                icon: "error"
+            });
+            return;
+        }
         let formData = new FormData(this); // Lấy dữ liệu từ form
         Swal.fire({
             title: "Đang xử lý...",
@@ -1096,6 +1108,17 @@ document.addEventListener("DOMContentLoaded", function () {
     window.updateProduct = function(event) {
         event.preventDefault(); // Ngăn submit mặc định
 
+        let giaNhap = parseFloat(document.getElementById("edit-gia_nhap").value);
+        let giaBan = parseFloat(document.getElementById("edit-gia").value);
+
+        if (giaNhap >= giaBan) {
+            Swal.fire({
+                title: "Lỗi!",
+                text: "Giá nhập không được lớn hơn hoặc bằng giá bán!",
+                icon: "error"
+            });
+            return;
+        }
         let form = document.getElementById("editProductForm");
         let formData = new FormData(form);
 

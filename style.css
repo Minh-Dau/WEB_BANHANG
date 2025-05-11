@@ -169,7 +169,6 @@ header{
 .headline {
     margin-top: 30px;
     text-align: center; /* Center the text horizontally */
-    padding: 20px; /* Add some padding for better visual appearance */
 }
 .wrapper{
     display: flex;

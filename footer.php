@@ -59,6 +59,9 @@
             line-height: 26px;
             cursor: pointer;
         }
+        a{
+            color: black;
+        }
     </style>
 </head>
 <body>
@@ -77,26 +80,24 @@
                 <p onclick="openMap()"><i class="bi bi-geo-alt"></i> &nbsp;Chi Nhánh Trường ĐH Sư Phạm Kỹ Thuật Vĩnh Long</p>
                 <p onclick="openMap()"><i class="bi bi-geo-alt"></i> &nbsp;Đường Nguyễn Huệ, Phường 2, TP. Vĩnh Long</p>
                 <p><i class="bi bi-telephone-fill"></i> &nbsp;Hotline: 0122 112 211</p>
-                <p><i class="bi bi-envelope-fill"></i> &nbsp;hustlerstonie@gmail.com</p>
+                <p><i class="bi bi-envelope-fill"></i> &nbsp;<a href="mailto:hustlerstonie@gmail.com">hustlerstonie@gmail.com</a></p>
             </div>
             <div class="footer-col">
                 <h4>Chính sách</h4>
                 <ul>
-                    <li><i class="bi bi-dot"></i>&nbsp;Chính sách bảo mật</li>
-                    <li><i class="bi bi-dot"></i>&nbsp;FAQ</li>
-                    <li><i class="bi bi-dot"></i>&nbsp;Thẻ Thành Viên</li>
-                    <li><i class="bi bi-dot"></i>&nbsp;Bảo hành & Đổi trả</li>
-                    <li><i class="bi bi-dot"></i>&nbsp;Giao hàng hỏa tốc</li>
+                    <li><i class="bi bi-dot"></i>&nbsp;<a href="chinhsach.php">Hướng Dẫn Mua Hàng</a></li>
+                    <li><i class="bi bi-dot"></i>&nbsp;<a href="baohanh.php">Bảo hành & Đổi trả</a></li>
+                    <li><i class="bi bi-dot"></i>&nbsp;<a href="giaohanghoatoc.php">Giao hàng hỏa tốc</a></li>
                 </ul>
             </div>
             <div class="footer-col">
                 <h4>Mạng Xã Hội</h4>
-                <p><i class="bi bi-facebook"></i>&nbsp; Hustler Stonie</p>
-                <p><i class="bi bi-instagram"></i>&nbsp; Hustler Stonie</p>
+                <p><i class="bi bi-facebook"></i>&nbsp; <a href="https://www.facebook.com/profile.php?id=61576157423449">Hustler Stonie</a></p>
+                <p><i class="bi bi-instagram"></i>&nbsp; <a href="https://www.facebook.com/profile.php?id=61576157423449">Hustler Stonie</a></p>
             </div>
             <div class="footer-col">
                 <h4>Fanpage</h4>
-                <!-- Nội dung khác -->
+                <iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D61576157423449&tabs=timeline&width=300&height=150&small_header=true&adapt_container_width=true&hide_cover=true&show_facepile=true&appId" width="300" height="150" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
             </div>
         </div>
     </div>

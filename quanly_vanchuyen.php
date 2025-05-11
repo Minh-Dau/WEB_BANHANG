@@ -161,12 +161,12 @@ $conn->close();
             <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                 <div class="sb-sidenav-menu">
                     <div class="nav">
-                        <div class="sb-sidenav-menu-heading">Core</div>
+                        <div class="sb-sidenav-menu-heading">Thống kê</div>
                         <a class="nav-link" href="admin.php">
                             <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                            QUẢN LÝ
+                            THỐNG KÊ
                         </a>
-                        <div class="sb-sidenav-menu-heading">Addons</div>
+                        <div class="sb-sidenav-menu-heading">Quản lý</div>
                         <a class="nav-link" href="quanlysanpham.php">
                             <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                             QUẢN LÝ SẢN PHẨM
@@ -213,7 +213,7 @@ $conn->close();
                 <div class="container-fluid px-4">
                     <h1 class="mt-4">QUẢN LÝ VẬN CHUYỂN</h1>
                     <ol class="breadcrumb mb-4">
-                        <li class="breadcrumb-item"><a href="index.html">QUẢN LÝ</a></li>
+                        <li class="breadcrumb-item"><a href="http://localhost/BAOCAO/quanly_vanchuyen.php">QUẢN LÝ</a></li>
                         <li class="breadcrumb-item active">QUẢN LÝ VẬN CHUYỂN</li>
                     </ol>
                     <div class="card mb-4">

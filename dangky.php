@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
 <form id="trangdk" action="dangky.php" method="POST">
     <div>
         <h1 class="h1_dk">ĐĂNG KÝ TÀI KHOẢN</h1>
-        <p class="p_tt">Bạn đã có tài khoản? <a href="dangnhap.php">Đăng nhập tại đây</a></p>
+        <p class="p_tt">Bạn đã có tài khoản? <a href="dangnhap.php" style="color: blue;">Đăng nhập tại đây</a></p>
         <br>
         <p class="p_tde">THÔNG TIN CÁ NHÂN</p>
         <div class="cha_dk">

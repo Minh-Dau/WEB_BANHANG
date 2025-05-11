@@ -89,13 +89,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Kiểm tra định dạng discount_type
-    if (!in_array($discount_type, ['percentage', 'fixed'])) {
+    if (!in_array($discount_type, ['percent', 'fixed'])) {
         echo json_encode(["status" => "error", "message" => "Loại giảm giá không hợp lệ!"]);
         exit();
     }
 
     // Kiểm tra giá trị giảm giá
-    if ($discount_type === 'percentage' && ($discount_value < 0 || $discount_value > 100)) {
+    if ($discount_type === 'percent' && ($discount_value < 0 || $discount_value > 100)) {
         echo json_encode(["status" => "error", "message" => "Giá trị giảm giá phần trăm phải nằm trong khoảng 0-100!"]);
         exit();
     }
@@ -105,6 +105,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (strtotime($expiry_date) <= strtotime($currentDate)) {
         echo json_encode(["status" => "error", "message" => "Ngày hết hạn phải lớn hơn ngày hiện tại!"]);
         exit();
+    }
+
+    // Kiểm tra giá trị giảm và đơn hàng tối thiểu
+    if ($discount_value > $min_order_value && $min_order_value > 0) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Giá trị giảm không được lớn hơn giá trị đơn hàng tối thiểu!'
+        ]);
+        exit;
     }
 
     // Kiểm tra mã giảm giá đã tồn tại

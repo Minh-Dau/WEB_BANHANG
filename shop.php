@@ -68,95 +68,100 @@
     </style>
 <body>
     <?php
-        include 'header.php';
-        include("config.php");
+include 'header.php';
+include 'config.php'; // Include only once
+?>
+<div class="thumb_shop">
+    <img src="IMG/testimg.jpg" alt="">
+</div>
+<div class="headline">
+    <h3>TẤT CẢ SẢN PHẨM</h3>
+</div>
+<div class="filter-buttons">
+    <button class="filter-btn" data-category-id="all">Tất cả</button>
+    <?php
+    $sql_danhmuc = "SELECT * FROM danhmuc";
+    $result_danhmuc = mysqli_query($conn, $sql_danhmuc);
+    if ($result_danhmuc === false) {
+        die("Query failed: " . $conn->error);
+    }
+    while ($row = mysqli_fetch_assoc($result_danhmuc)) {
+        echo '<button class="filter-btn" data-category-id="' . $row['id'] . '">' . $row['tendanhmuc'] . '</button>';
+    }
     ?>
-        <div class="thumb_shop">
-            <img src="IMG/testimg.jpg" alt="">
-        </div>
-        <div class="headline">
-            <h3>TẤT CẢ SẢN PHẨM</h3>
-        </div>
-        <div class="filter-buttons">
-            <button class="filter-btn" data-category-id="all">Tất cả</button>
-            <?php
-            include("config.php");
-            $sql_danhmuc = "SELECT * FROM danhmuc";
-            $result_danhmuc = mysqli_query($conn, $sql_danhmuc);
+</div>
+<div class="wrapper">
+    <div class="product" id="product-list">
+        <?php
+        include("config.php");
 
-            while ($row = mysqli_fetch_assoc($result_danhmuc)) {
-                echo '<button class="filter-btn" data-category-id="'.$row['id'].'">'.$row['tendanhmuc'].'</button>';
-            }
-            ?>
-        </div>
-        <!-- code tìm kiếm-->
+        $search = isset($_GET['search']) ? trim($_GET['search']) : "";
+        $danhmuc_id = isset($_GET['danhmuc_id']) ? $_GET['danhmuc_id'] : 'all';
+        $sql = "SELECT * FROM sanpham WHERE trangthai = 'Hiển Thị'";
+        $params = [];
+        $types = "";
+        if (!empty($search)) {
+            $sql .= " AND ((tensanpham LIKE ? OR SOUNDEX(tensanpham) = SOUNDEX(?)) 
+                    OR danhmuc_id IN 
+                        (SELECT id FROM danhmuc WHERE tendanhmuc LIKE ? OR SOUNDEX(tendanhmuc) = SOUNDEX(?)))";
+            $params[] = "%$search%";
+            $params[] = $search;
+            $params[] = "%$search%";
+            $params[] = $search;
+            $types .= "ssss";
+        }
+        if ($danhmuc_id !== 'all') {
+            $sql .= " AND danhmuc_id = ?";
+            $params[] = $danhmuc_id;
+            $types .= "i";
+        }
+        $sql .= " ORDER BY id DESC";
+
+        $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            die("Prepare failed: " . $conn->error);
+        }
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        ?>
         <div class="wrapper">
-            <div class="product" id="product-list">
+            <div class="product">
                 <?php
-                include("config.php");
-
-                $search = isset($_GET['search']) ? trim($_GET['search']) : "";
-                $danhmuc_id = isset($_GET['danhmuc_id']) ? $_GET['danhmuc_id'] : 'all';
-                $sql = "SELECT * FROM sanpham WHERE trangthai = 'Hiển Thị'";
-                $params = [];
-                $types = "";
-                if (!empty($search)) {
-                    $sql .= " AND ((tensanpham LIKE ? OR SOUNDEX(tensanpham) = SOUNDEX(?)) 
-                            OR danhmuc_id IN 
-                                (SELECT id FROM danhmuc WHERE tendanhmuc LIKE ? OR SOUNDEX(tendanhmuc) = SOUNDEX(?)))";
-                    $params[] = "%$search%";
-                    $params[] = $search;
-                    $params[] = "%$search%";
-                    $params[] = $search;
-                    $types .= "ssss";
-                }
-                if ($danhmuc_id !== 'all') {
-                    $sql .= " AND danhmuc_id = ?";
-                    $params[] = $danhmuc_id;
-                    $types .= "i";
-                }
-                $stmt = $conn->prepare($sql);
-                if (!empty($params)) {
-                    $stmt->bind_param($types, ...$params);
-                }
-                $stmt->execute();
-                $result = $stmt->get_result();
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
                 ?>
-                <div class="wrapper">
-                    <div class="product">
-                        <?php
-                        if ($result->num_rows > 0) {
-                            while ($row = $result->fetch_assoc()) {
-                        ?>
-                                <div class="product_item">
-                                    <div class="product_top">
-                                        <a href="chitietsanpham.php?id=<?= $row['id'] ?>" class="product_thumb">
-                                            <img src="<?= $row['img'] ?>" alt="" width="250" height="250">
-                                        </a>
-                                        <a href="chitietsanpham.php?id=<?= $row['id'] ?>" class="buy_now">Mua ngay</a>
-                                    </div>
-                                    <div class="product_info">
-                                        <a href="chitietsanpham.php?id=<?= $row['id'] ?>" class="product_cat"><?= htmlspecialchars($row['tensanpham']) ?></a>
-                                        <div class="product_price"><?= number_format($row['gia'], 0, ',', '.') ?> VND</div>
-                                    </div>
-                                </div>
-                        <?php 
-                            }
-                        } else {
-                            echo '<p id="no-product-msg" style="text-align: center; color: red; ">Không tìm thấy sản phẩm nào.</p>';
-                        }
+                        <div class="product_item">
+                            <div class="product_top">
+                                <a href="chitietsanpham.php?id=<?= $row['id'] ?>" class="product_thumb">
+                                    <img src="<?= $row['img'] ?>" alt="" width="250" height="250">
+                                </a>
+                                <a href="chitietsanpham.php?id=<?= $row['id'] ?>" class="buy_now">Mua ngay</a>
+                            </div>
+                            <div class="product_info">
+                                <a href="chitietsanpham.php?id=<?= $row['id'] ?>" class="product_cat"><?= htmlspecialchars($row['tensanpham']) ?></a>
+                                <div class="product_price"><?= number_format($row['gia'], 0, ',', '.') ?> VND</div>
+                            </div>
+                        </div>
+                <?php 
+                    }
+                } else {
+                    echo '<p id="no-product-msg" style="text-align: center; color: red; ">Không tìm thấy sản phẩm nào.</p>';
+                }
 
-                        $stmt->close();
-                        $conn->close();
-                        ?>
-                    </div>
-                </div>
+                $stmt->close();
+                $conn->close();
+                ?>
             </div>
         </div>
-    <?php
-        include 'chat.php'; 
-        include 'footer.php ';
-    ?>
+    </div>
+</div>
+<?php
+include 'chat.php';
+include 'footer.php';
+?>
 </body>
 </html>
 <script>

@@ -8,23 +8,28 @@ if (!isset($_SESSION['user']) ||
     exit();
 }
 
-// Kiểm tra quyền quản lý đơn hàng
 include 'config.php';
 $user_id = $_SESSION['user']['id']; // Lấy ID của người dùng hiện tại từ session
 
-// Kiểm tra quyền manage_order trong employee_permissions
-$has_order_permission = false;
+// Kiểm tra quyền manage_order và các quyền chi tiết (manage_order_status, print_invoice)
+$has_status_permission = false;
+$has_print_permission = false;
 if ($_SESSION['user']['phanquyen'] === 'nhanvien') {
-    $sql_permission = "SELECT permission FROM employee_permissions WHERE user_id = ? AND permission = 'manage_order'";
+    $sql_permission = "SELECT permission FROM employee_permissions WHERE user_id = ? AND (permission = 'manage_order' OR permission = 'manage_order_status' OR permission = 'print_invoice')";
     $stmt_permission = $conn->prepare($sql_permission);
     $stmt_permission->bind_param("i", $user_id);
     $stmt_permission->execute();
     $result_permission = $stmt_permission->get_result();
-    $has_order_permission = $result_permission->num_rows > 0;
+    while ($row = $result_permission->fetch_assoc()) {
+        if ($row['permission'] === 'manage_order_status') $has_status_permission = true;
+        if ($row['permission'] === 'print_invoice') $has_print_permission = true;
+    }
     $stmt_permission->close();
 } else if ($_SESSION['user']['phanquyen'] === 'admin') {
-    // Admin mặc định có tất cả quyền, bao gồm manage_order
+    // Admin mặc định có tất cả quyền
     $has_order_permission = true;
+    $has_status_permission = true;
+    $has_print_permission = true;
 }
 
 $new_review_count = 0;
@@ -83,14 +88,6 @@ $conn->close();
 <!-- Phần thông báo admin -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Kiểm tra quyền manage_order
-        let hasOrderPermission = <?php echo json_encode($has_order_permission); ?>;
-        if (!hasOrderPermission) {
-            alert("Bạn không có quyền truy cập trang này!");
-            window.location.href = "admin.php?error=You do not have permission to access this page.";
-            return; // Dừng thực thi script nếu không có quyền
-        }
-
         // Tiếp tục xử lý nếu có quyền
         let newReviewCount = <?php echo $new_review_count; ?>;
         let newOrderCount = <?php echo $new_order_count; ?>; // Số đơn hàng chưa in
@@ -217,12 +214,12 @@ $conn->close();
                 <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                     <div class="sb-sidenav-menu">
                         <div class="nav">
-                            <div class="sb-sidenav-menu-heading">Core</div>
+                            <div class="sb-sidenav-menu-heading">Thống kê</div>
                             <a class="nav-link" href="admin.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                                QUẢN LÝ
+                                THỐNG KÊ
                             </a>
-                            <div class="sb-sidenav-menu-heading">Interface</div>
+                            <div class="sb-sidenav-menu-heading">Quản lý</div>
                             <a class="nav-link" href="quanlysanpham.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                                 QUẢN LÝ SẢN PHẨM
@@ -270,7 +267,7 @@ $conn->close();
                 <div class="container-fluid px-4">
                     <h1 class="mt-4">QUẢN LÝ ĐƠN HÀNG</h1>
                     <ol class="breadcrumb mb-4">
-                        <li class="breadcrumb-item"><a href="index.html">QUẢN LÝ</a></li>
+                        <li class="breadcrumb-item"><a href="http://localhost/BAOCAO/quanlydonhang.php">QUẢN LÝ</a></li>
                         <li class="breadcrumb-item active">QUẢN LÝ ĐƠN HÀNG</li>
                     </ol>
                     <div class="card mb-4"></div>
@@ -318,8 +315,9 @@ $conn->close();
                                 <?php
                                 include 'config.php';
                                 $sql = "SELECT o.*, u.hoten AS user_name, u.email AS user_email, u.sdt AS user_phone, u.diachi AS user_address 
-                                        FROM oder o 
-                                        JOIN frm_dangky u ON o.user_id = u.id";
+                                FROM oder o 
+                                JOIN frm_dangky u ON o.user_id = u.id 
+                                ORDER BY o.id DESC";
                                 $result = $conn->query($sql);
 
                                 if ($result->num_rows > 0) {
@@ -393,12 +391,11 @@ $conn->close();
                                     </button> ";
                                         $invoiceStatus = $row["invoice_status"]; 
                                         echo "<button class='btn btn-secondary btn-sm printOrder' 
-                                        data-invoice-status='" . htmlspecialchars($invoiceStatus) . "' 
-                                        data-id='" . htmlspecialchars($row["id"]) . "'>
-                                        " . ($invoiceStatus === "Đã in" ? "Đã in" : "In Đơn") . "
-                                  </button>";
-                           
-
+                                            data-invoice-status='" . htmlspecialchars($invoiceStatus) . "' 
+                                            data-id='" . htmlspecialchars($row["id"]) . "'
+                                            data-has-print-permission='" . ($has_print_permission ? 'true' : 'false') . "'>
+                                            " . ($invoiceStatus === "Đã in" ? "Đã in" : "In Đơn") . "
+                                        </button>";
                                         echo "</td>";
                                         echo "</tr>";
                                     }
@@ -557,49 +554,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Xử lý nút "Xác nhận", "Đang giao", "Đã giao", 
     updateStatusButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const id = button.getAttribute('data-id');
-            const currentStatus = button.getAttribute('data-trangthai');
-            let newStatus = '';
-            if (currentStatus === 'Chờ xác nhận') {
-                newStatus = 'Đã xác nhận';
-            } else if (currentStatus === 'Đã xác nhận') {
-                newStatus = 'Đang giao';
-            } else if (currentStatus === 'Đang giao') {
-                newStatus = 'Đã giao';
-            } else if (currentStatus === 'Đã giao') {
-                newStatus = 'Đã giao';
-            }
+    button.addEventListener('click', function () {
+        const id = button.getAttribute('data-id');
+        const currentStatus = button.getAttribute('data-trangthai');
+        let newStatus = '';
 
-            fetch('update_status.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `id=${id}&trangthai=${newStatus}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    button.setAttribute('data-trangthai', newStatus);
-                    button.textContent = newStatus === 'Đã xác nhận' ? 'Đang giao' :
-                                         newStatus === 'Đang giao' ? 'Đã giao' :
-                                         newStatus === 'Đã giao' ? 'Đã hủy' : '';
-                    if (newStatus === 'Đã hủy') {
-                        button.remove();
-                    }
-                    const statusCell = button.closest('tr').children[2];
-                    statusCell.textContent = newStatus;
-                } else {
-                    alert('Cập nhật trạng thái thất bại!');
+        if (currentStatus === 'Chờ xác nhận') {
+            newStatus = 'Đã xác nhận';
+        } else if (currentStatus === 'Đã xác nhận') {
+            newStatus = 'Đang giao';
+        } else if (currentStatus === 'Đang giao') {
+            newStatus = 'Đã giao';
+        } else {
+            Swal.fire({
+                title: 'Lỗi!',
+                text: 'Không thể cập nhật trạng thái từ trạng thái hiện tại.',
+                icon: 'error'
+            });
+            return;
+        }
+
+        console.log('Sending AJAX: id=', id, 'trangthai=', newStatus); // Debug trong console
+        fetch('update_status.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `id=${encodeURIComponent(id)}&trangthai=${encodeURIComponent(newStatus)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                button.setAttribute('data-trangthai', newStatus);
+                button.textContent = newStatus === 'Đã xác nhận' ? 'Đang giao' :
+                                     newStatus === 'Đang giao' ? 'Đã giao' : 'Đã giao';
+                if (newStatus === 'Đã giao') {
+                    button.setAttribute('disabled', 'disabled');
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Đã xảy ra lỗi khi cập nhật trạng thái!');
+                const statusCell = button.closest('tr').children[2];
+                statusCell.textContent = newStatus;
+            } else {
+                Swal.fire({
+                    title: 'Lỗi!',
+                    text: data.error || 'Cập nhật trạng thái thất bại!',
+                    icon: 'error'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Lỗi!',
+                text: 'Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại!',
+                icon: 'error'
             });
         });
     });
+});
 });
 </script>
 <!-- này là lọc đơn trạng thái đơn-->
@@ -666,50 +677,6 @@ document.addEventListener('DOMContentLoaded', function () {
     closeDetailsButton.addEventListener('click', function () {
         oderDetailsSection.style.display = 'none';
     });
-
-    updateStatusButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const id = button.getAttribute('data-id');
-            const currentStatus = button.getAttribute('data-trangthai');
-            let newStatus = '';
-
-            if (currentStatus === 'Chờ xác nhận') {
-                newStatus = 'Đã xác nhận';
-            } else if (currentStatus === 'Đã xác nhận') {
-                newStatus = 'Đang giao';
-            } else if (currentStatus === 'Đang giao') {
-                newStatus = 'Đã giao';
-            }
-
-            fetch('update_status.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `id=${id}&trangthai=${newStatus}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    button.setAttribute('data-trangthai', newStatus);
-                    button.textContent = newStatus === 'Đã xác nhận' ? 'Đang giao' :
-                                         newStatus === 'Đang giao' ? 'Đã giao' : 'Đã giao';
-                    if (newStatus === 'Đã giao') {
-                        button.setAttribute('disabled', 'disabled');
-                    }
-                    const statusCell = button.closest('tr').children[2]; // Cột "Trạng thái" giờ là cột thứ 3
-                    statusCell.textContent = newStatus;
-                } else {
-                    alert('Cập nhật trạng thái thất bại!');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Đã xảy ra lỗi khi cập nhật trạng thái!');
-            });
-        });
-    });
-
     // Xử lý lọc đơn hàng theo trạng thái
    statusFilter.addEventListener('change', function () {
     const selectedStatus = this.value;
@@ -786,19 +753,39 @@ document.addEventListener("DOMContentLoaded", function () {
 
     printButtons.forEach(function (printButton) {
         let invoiceStatus = printButton.getAttribute("data-invoice-status");
+        let hasPrintPermission = printButton.getAttribute("data-has-print-permission") === "true";
 
         // Thiết lập trạng thái ban đầu của nút
         if (invoiceStatus === "Đã in") {
             printButton.textContent = "Đã in";
             printButton.disabled = true;
+        } else if (!hasPrintPermission) {
+            // Xóa dòng này để tránh thêm màu đỏ
+            // printButton.classList.add("btn-danger");
+            printButton.title = "Bạn không có quyền in hóa đơn"; // Giữ tooltip để thông báo
         } else {
             printButton.textContent = "In Đơn";
             printButton.disabled = false;
         }
 
         printButton.addEventListener("click", function () {
+            if (!hasPrintPermission) {
+                Swal.fire({
+                    title: "Lỗi!",
+                    text: "Bạn không có quyền in hóa đơn.",
+                    icon: "error",
+                    confirmButtonText: "OK"
+                });
+                return;
+            }
+
             if (invoiceStatus === "Đã in") {
-                alert("Hóa đơn này đã được in!");
+                Swal.fire({
+                    title: "Thông báo",
+                    text: "Hóa đơn này đã được in!",
+                    icon: "info",
+                    confirmButtonText: "OK"
+                });
                 return;
             }
 
@@ -818,7 +805,7 @@ document.addEventListener("DOMContentLoaded", function () {
             let paymentMethod = document.getElementById("detailPaymentMethod").value;
             let status = document.getElementById("detailStatus").value;
             let paymentStatus = document.getElementById("detailPaymentStatus").value;
-            let shippingCost = document.getElementById("detailShippingCost").value + " VND";
+            let shippingCost = document.getElementById("detailShippingCost").value;
             let total = document.getElementById("detailTotal").value.replace("VND VND", "VND");
 
             let docDefinition = {
@@ -883,15 +870,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     totalPrice: { fontSize: 14, bold: true, color: "red" },
                 },
             };
-            // Tạo và tải PDF
+
             pdfMake.createPdf(docDefinition).download("HoaDon.pdf");
-            // Cập nhật UI
+
             printButton.textContent = "Đã in";
             printButton.disabled = true;
             invoiceStatus = "Đã in";
-            // Lấy ID đơn hàng từ nút (hoặc từ button .view-btn nếu cần)
+
             const orderId = printButton.getAttribute("data-id");
-            // Gửi yêu cầu cập nhật trạng thái hóa đơn về server
             fetch("updatehoadon.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -906,9 +892,23 @@ document.addEventListener("DOMContentLoaded", function () {
                     console.log("Cập nhật trạng thái hóa đơn thành công");
                 } else {
                     console.error("Lỗi cập nhật hóa đơn:", data.message);
+                    Swal.fire({
+                        title: "Lỗi!",
+                        text: data.message || "Không thể cập nhật trạng thái hóa đơn.",
+                        icon: "error",
+                        confirmButtonText: "OK"
+                    });
                 }
             })
-            .catch(error => console.error("Lỗi kết nối:", error));
+            .catch(error => {
+                console.error("Lỗi kết nối:", error);
+                Swal.fire({
+                    title: "Lỗi!",
+                    text: "Đã xảy ra lỗi khi cập nhật trạng thái hóa đơn.",
+                    icon: "error",
+                    confirmButtonText: "OK"
+                });
+            });
         });
     });
 });

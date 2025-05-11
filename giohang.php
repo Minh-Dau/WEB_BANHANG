@@ -10,10 +10,9 @@ if (!isset($_SESSION['username'])) {
     echo "<script>window.location.href='dangnhap.php';</script>";
     exit();
 }
-
 $username = $_SESSION['username'];
 
-// Lấy thông tin tỉnh/thành từ cơ sở dữ liệu
+// Lấy thông tin tỉnh/thành từ cơ sở dữ liệu provinces
 $provinces = [];
 $sql_provinces = "SELECT name, distance FROM provinces";
 $result_provinces = $conn->query($sql_provinces);
@@ -33,15 +32,7 @@ while ($row = $result_shipping->fetch_assoc()) {
     ];
 }
 
-$initial_shipping_cost = 0;
-if (!empty($province)) {
-    $province_key = preg_replace('/^Tỉnh\s/', '', $province);
-    $default_shipping_id = 1; // Giả sử ID 1 là phương thức mặc định
-    $shipping_cost_per_km = $shipping_methods[$default_shipping_id]['cost'] ?? 100;
-    $initial_shipping_cost = isset($provinces[$province_key]) ? $provinces[$province_key] * $shipping_cost_per_km : 0;
-}
-
-// Lấy user_id và thông tin người dùng từ frm_dangky
+// Lấy thông tin người dùng từ frm_dangky
 $sql = "SELECT id, hoten, diachi, sdt FROM frm_dangky WHERE username = ? LIMIT 1";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $username);
@@ -55,6 +46,7 @@ if ($result->num_rows > 0) {
     $diachi = $user['diachi'] ?? '';
     $sdt = $user['sdt'] ?? '';
 
+    // Phân tích địa chỉ để lấy tỉnh/thành, quận/huyện, phường/xã
     $address_parts = explode(', ', $diachi);
     $specific_address = $address_parts[0] ?? '';
     $ward = $address_parts[1] ?? '';
@@ -65,6 +57,15 @@ if ($result->num_rows > 0) {
     exit();
 }
 $stmt->close();
+
+// Tính phí vận chuyển dựa trên tỉnh/thành phố từ địa chỉ người dùng
+$initial_shipping_cost = 0;
+if (!empty($province)) {
+    $province_key = preg_replace('/^(Tỉnh|Thành phố)\s/', '', $province);
+    $default_shipping_id = 1; // Phương thức vận chuyển mặc định
+    $shipping_cost_per_km = $shipping_methods[$default_shipping_id]['cost'] ?? 100;
+    $initial_shipping_cost = isset($provinces[$province_key]) ? $provinces[$province_key] * $shipping_cost_per_km : 0;
+}
 
 // Lấy giỏ hàng từ cart_item
 $cart_items = [];
@@ -119,7 +120,7 @@ if (isset($_GET['action'])) {
                 $stmt->execute();
                 $stmt->close();
             }
-            header('Location: ./giohang.php');
+            echo "<script>window.location.href='giohang.php';</script>";
             exit();
             break;
 
@@ -128,7 +129,7 @@ if (isset($_GET['action'])) {
             $stmt->bind_param("i", $user_id);
             $stmt->execute();
             $stmt->close();
-            header('Location: ./giohang.php');
+            echo "<script>window.location.href='giohang.php';</script>";
             exit();
             break;
 
@@ -152,7 +153,7 @@ if (isset($_GET['action'])) {
                 $shipping_cost = isset($provinces[$province_key]) ? $provinces[$province_key] * ($shipping_methods[$shipping_method_id]['cost'] ?? 100) : 0;
                 $shipping_method = $shipping_methods[$shipping_method_id]['method_name'] ?? 'Giao hàng tiêu chuẩn';
                 $payment_method = isset($_POST['payment_method']) ? trim($_POST['payment_method']) : '';
-                $trangthai = 'Chờ xác nhận';
+                $trangthai = in_array($payment_method, ['Thanh toán MoMo', 'Thanh toán VNPAY']) ? 'Pending Payment' : 'Chờ xác nhận';
                 $payment_status_db = 'Chưa thanh toán';
 
                 $discount_code = isset($_POST['discount_code']) ? trim($_POST['discount_code']) : '';
@@ -224,6 +225,7 @@ if (isset($_GET['action'])) {
                     $total = 0;
                     $order_items = [];
 
+                    // Kiểm tra tồn kho
                     foreach ($selected_products as $sanpham_id) {
                         if (isset($cart_items[$sanpham_id])) {
                             $item = $cart_items[$sanpham_id];
@@ -274,21 +276,327 @@ if (isset($_GET['action'])) {
                     $note = isset($_POST['note']) ? mysqli_real_escape_string($conn, $_POST['note']) : '';
                     $ngaydathang = date("Y-m-d H:i:s");
 
-                    $stmt_update = $conn->prepare("UPDATE frm_dangky SET hoten = ?, diachi = ?, sdt = ? WHERE id = ?");
-                    $stmt_update->bind_param("sssi", $hoten, $diachi, $sdt, $user_id);
-                    $stmt_update->execute();
-                    $stmt_update->close();
+                    // Bắt đầu transaction
+                    $conn->begin_transaction();
+                    try {
+                        // Cập nhật thông tin người dùng
+                        $stmt_update = $conn->prepare("UPDATE frm_dangky SET hoten = ?, diachi = ?, sdt = ? WHERE id = ?");
+                        $stmt_update->bind_param("sssi", $hoten, $diachi, $sdt, $user_id);
+                        $stmt_update->execute();
+                        $stmt_update->close();
 
-                    $stmt = $conn->prepare("INSERT INTO oder (user_id, note, total, ngaydathang, payment_method, shipping_cost, discount_code, discount_amount, trangthai, payment_status) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    $stmt->bind_param("isdssdssds", $user_id, $note, $total_payment, $ngaydathang, $payment_method, $shipping_cost, $discount_code, $discount_amount, $trangthai, $payment_status_db);
+                        // Tạo đơn hàng tạm thời
+                        $stmt = $conn->prepare("INSERT INTO oder (user_id, note, total, ngaydathang, payment_method, shipping_cost, discount_code, discount_amount, trangthai, payment_status) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                        $stmt->bind_param("isdssdssds", $user_id, $note, $total_payment, $ngaydathang, $payment_method, $shipping_cost, $discount_code, $discount_amount, $trangthai, $payment_status_db);
+                        $stmt->execute();
+                        $order_id = $conn->insert_id;
+                        $stmt->close();
+
+                        // Lưu chi tiết đơn hàng vào session thay vì chèn ngay vào oder_detail
+                        $_SESSION['pending_order'] = [
+                            'order_id' => $order_id,
+                            'items' => $order_items,
+                            'discount_code' => $discount_code
+                        ];
+
+                        // Commit transaction
+                        $conn->commit();
+
+                        if ($payment_method == 'Thanh toán MoMo') {
+                            $endpoint = "https://test-payment.momo.vn/v2/gateway/api/create";
+                            $partnerCode = "MOMO";
+                            $accessKey = "F8BBA842ECF85";
+                            $secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
+                            $orderInfo = "pay with MoMo";
+                            $amount = (int)$total_payment;
+                            $orderId = $order_id . "_" . time();
+                            $redirectUrl = "http://localhost/BAOCAO/giohang.php?action=callback&order_id=$order_id";
+                            $notifyUrl = "http://localhost/BAOCAO/giohang.php?action=notify";
+                            $requestId = time() . "";
+                            $requestType = "payWithMethod";
+                            $extraData = "";
+                            $partnerName = "MoMo Payment";
+                            $storeId = "Test Store";
+                            $lang = "vi";
+                            $autoCapture = true;
+
+                            $rawHash = "accessKey=$accessKey&amount=$amount&extraData=$extraData&ipnUrl=$notifyUrl&orderId=$orderId&orderInfo=$orderInfo&partnerCode=$partnerCode&redirectUrl=$redirectUrl&requestId=$requestId&requestType=$requestType";
+                            $signature = hash_hmac("sha256", $rawHash, $secretKey);
+
+                            $data = [
+                                "partnerCode" => $partnerCode,
+                                "partnerName" => $partnerName,
+                                "storeId" => $storeId,
+                                "requestId" => $requestId,
+                                "amount" => $amount,
+                                "orderId" => $orderId,
+                                "orderInfo" => $orderInfo,
+                                "redirectUrl" => $redirectUrl,
+                                "ipnUrl" => $notifyUrl,
+                                "lang" => $lang,
+                                "autoCapture" => $autoCapture,
+                                "extraData" => $extraData,
+                                "requestType" => $requestType,
+                                "signature" => $signature
+                            ];
+
+                            $ch = curl_init($endpoint);
+                            curl_setopt($ch, CURLOPT_POST, true);
+                            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
+                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                            $result = curl_exec($ch);
+                            curl_close($ch);
+
+                            $response = json_decode($result, true);
+                            if (isset($response['payUrl'])) {
+                                echo "<script>window.location.href='" . $response['payUrl'] . "';</script>";
+                                exit();
+                            } else {
+                                // Xóa đơn hàng tạm thời nếu không tạo được payUrl
+                                $stmt_delete_order = $conn->prepare("DELETE FROM oder WHERE id = ?");
+                                $stmt_delete_order->bind_param("i", $order_id);
+                                $stmt_delete_order->execute();
+                                $stmt_delete_order->close();
+
+                                unset($_SESSION['pending_order']);
+
+                                echo "<script>alert('Lỗi MoMo: " . ($response['message'] ?? 'Không có phản hồi') . "'); window.location.href = 'giohang.php';</script>";
+                                exit();
+                            }
+                        } elseif ($payment_method == 'Thanh toán VNPAY') {
+                            // Cấu hình VNPAY
+                            $vnp_TmnCode = "RDIRE0L2"; // Mã website tại VNPAY
+                            $vnp_HashSecret = "5Y79USNE8QBDIU3YE70SEBMSZXNAOUOS"; // Chuỗi bí mật
+                            $vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"; // URL thanh toán sandbox
+                            $vnp_Returnurl = "http://localhost/BAOCAO/giohang.php?action=callback&order_id=$order_id";
+                            $vnp_TxnRef = $order_id . "_" . time(); // Mã đơn hàng
+                            $vnp_OrderInfo = "Thanh toán đơn hàng #$order_id";
+                            $vnp_OrderType = "billpayment";
+                            $vnp_Amount = (int)($total_payment * 100); // Số tiền (VND * 100)
+                            $vnp_Locale = "vn";
+                            $vnp_IpAddr = $_SERVER['REMOTE_ADDR'];
+                            $vnp_CreateDate = date('YmdHis');
+                            $vnp_ExpireDate = date('YmdHis', strtotime('+15 minutes'));
+
+                            $inputData = [
+                                "vnp_Version" => "2.1.0",
+                                "vnp_TmnCode" => $vnp_TmnCode,
+                                "vnp_Amount" => $vnp_Amount,
+                                "vnp_Command" => "pay",
+                                "vnp_CreateDate" => $vnp_CreateDate,
+                                "vnp_CurrCode" => "VND",
+                                "vnp_IpAddr" => $vnp_IpAddr,
+                                "vnp_Locale" => $vnp_Locale,
+                                "vnp_OrderInfo" => $vnp_OrderInfo,
+                                "vnp_OrderType" => $vnp_OrderType,
+                                "vnp_ReturnUrl" => $vnp_Returnurl,
+                                "vnp_TxnRef" => $vnp_TxnRef,
+                                "vnp_ExpireDate" => $vnp_ExpireDate
+                            ];
+
+                            ksort($inputData);
+                            $query = http_build_query($inputData);
+                            $hashData = "";
+                            foreach ($inputData as $key => $value) {
+                                if ($hashData == "") {
+                                    $hashData = $key . "=" . urlencode($value);
+                                } else {
+                                    $hashData .= "&" . $key . "=" . urlencode($value);
+                                }
+                            }
+                            $vnpSecureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
+                            $vnp_Url .= "?" . $query . "&vnp_SecureHash=" . $vnpSecureHash;
+
+                            echo "<script>window.location.href='$vnp_Url';</script>";
+                            exit();
+                        } else {
+                            // Thanh toán khi nhận hàng
+                            $conn->begin_transaction();
+                            try {
+                                // Cập nhật trạng thái đơn hàng
+                                $stmt_update_trangthai = $conn->prepare("UPDATE oder SET trangthai = ? WHERE id = ?");
+                                $stmt_update_trangthai->bind_param("si", $trangthai, $order_id);
+                                $stmt_update_trangthai->execute();
+                                $stmt_update_trangthai->close();
+
+                                if (!empty($discount_code)) {
+                                    $stmt_update_discount = $conn->prepare("UPDATE discount_codes SET used_count = used_count + 1 WHERE code = ?");
+                                    $stmt_update_discount->bind_param("s", $discount_code);
+                                    $stmt_update_discount->execute();
+                                    $stmt_update_discount->close();
+                                }
+
+                                // Chèn chi tiết đơn hàng
+                                $stmt_detail = $conn->prepare("INSERT INTO oder_detail (oder_id, sanpham_id, soluong, gia, subtotal) VALUES (?, ?, ?, ?, ?)");
+                                $stmt_update_stock = $conn->prepare("UPDATE sanpham SET soluong = soluong - ? WHERE id = ?");
+                                $stmt_delete_cart = $conn->prepare("DELETE FROM cart_item WHERE user_id = ? AND sanpham_id = ?");
+
+                                foreach ($order_items as $item) {
+                                    $stmt_detail->bind_param("iiidd", $order_id, $item['sanpham_id'], $item['soluong'], $item['gia'], $item['subtotal']);
+                                    $stmt_detail->execute();
+
+                                    $stmt_update_stock->bind_param("ii", $item['soluong'], $item['sanpham_id']);
+                                    $stmt_update_stock->execute();
+
+                                    $stmt_delete_cart->bind_param("ii", $user_id, $item['sanpham_id']);
+                                    $stmt_delete_cart->execute();
+                                }
+                                $stmt_detail->close();
+                                $stmt_update_stock->close();
+                                $stmt_delete_cart->close();
+
+                                $conn->commit();
+
+                                unset($_SESSION['pending_order']);
+
+                                echo "<script>window.location.href='giaidoan.php';</script>";
+                                exit();
+                            } catch (Exception $e) {
+                                $conn->rollback();
+                                echo "<script>alert('Lỗi khi tạo đơn hàng: " . $e->getMessage() . "'); window.location.href = 'giohang.php';</script>";
+                                exit();
+                            }
+                        }
+                    } catch (Exception $e) {
+                        $conn->rollback();
+                        echo "<script>alert('Lỗi khi tạo đơn hàng: " . $e->getMessage() . "'); window.location.href = 'giohang.php';</script>";
+                        exit();
+                    }
+                }
+            }
+            break;
+
+        case "callback":
+            if (isset($_GET['order_id'])) {
+                $order_id = intval($_GET['order_id']);
+                $conn->begin_transaction();
+                try {
+                    // Lấy thông tin đơn hàng tạm thời từ session
+                    if (!isset($_SESSION['pending_order']) || $_SESSION['pending_order']['order_id'] != $order_id) {
+                        throw new Exception("Không tìm thấy thông tin đơn hàng tạm thời.");
+                    }
+
+                    $order_items = $_SESSION['pending_order']['items'];
+                    $discount_code = $_SESSION['pending_order']['discount_code'];
+
+                    // Kiểm tra trạng thái thanh toán
+                    $payment_success = false;
+                    if (isset($_GET['resultCode']) && $_GET['resultCode'] == "0") { // MoMo
+                        $payment_success = true;
+                    } elseif (isset($_GET['vnp_ResponseCode']) && $_GET['vnp_ResponseCode'] == "00") { // VNPAY
+                        // Xác thực chữ ký VNPAY
+                        $vnp_HashSecret = "5Y79USNE8QBDIU3YE70SEBMSZXNAOUOS";
+                        $vnp_SecureHash = $_GET['vnp_SecureHash'];
+                        $inputData = array();
+                        foreach ($_GET as $key => $value) {
+                            if (substr($key, 0, 4) == "vnp_") {
+                                $inputData[$key] = $value;
+                            }
+                        }
+                        unset($inputData['vnp_SecureHash']);
+                        ksort($inputData);
+                        $hashData = "";
+                        foreach ($inputData as $key => $value) {
+                            if ($hashData == "") {
+                                $hashData = $key . "=" . urlencode($value);
+                            } else {
+                                $hashData .= "&" . $key . "=" . urlencode($value);
+                            }
+                        }
+                        $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
+                        if ($secureHash == $vnp_SecureHash) {
+                            $payment_success = true;
+                        } else {
+                            throw new Exception("Chữ ký VNPAY không hợp lệ.");
+                        }
+                    }
+
+                    if ($payment_success) {
+                        // Cập nhật trạng thái đơn hàng
+                        $trangthai = 'Chờ xác nhận';
+                        $stmt = $conn->prepare("UPDATE oder SET payment_status = 'Đã thanh toán', trangthai = ? WHERE id = ?");
+                        $stmt->bind_param("si", $trangthai, $order_id);
+                        $stmt->execute();
+                        $stmt->close();
+
+                        if (!empty($discount_code)) {
+                            $stmt_update_discount = $conn->prepare("UPDATE discount_codes SET used_count = used_count + 1 WHERE code = ?");
+                            $stmt_update_discount->bind_param("s", $discount_code);
+                            $stmt_update_discount->execute();
+                            $stmt_update_discount->close();
+                        }
+
+                        // Chèn chi tiết đơn hàng
+                        $stmt_detail = $conn->prepare("INSERT INTO oder_detail (oder_id, sanpham_id, soluong, gia, subtotal) VALUES (?, ?, ?, ?, ?)");
+                        $stmt_update_stock = $conn->prepare("UPDATE sanpham SET soluong = soluong - ? WHERE id = ?");
+                        $stmt_delete_cart = $conn->prepare("DELETE FROM cart_item WHERE user_id = ? AND sanpham_id = ?");
+
+                        foreach ($order_items as $item) {
+                            $stmt_detail->bind_param("iiidd", $order_id, $item['sanpham_id'], $item['soluong'], $item['gia'], $item['subtotal']);
+                            $stmt_detail->execute();
+
+                            $stmt_update_stock->bind_param("ii", $item['soluong'], $item['sanpham_id']);
+                            $stmt_update_stock->execute();
+
+                            $stmt_delete_cart->bind_param("ii", $user_id, $item['sanpham_id']);
+                            $stmt_delete_cart->execute();
+                        }
+                        $stmt_detail->close();
+                        $stmt_update_stock->close();
+                        $stmt_delete_cart->close();
+
+                        $conn->commit();
+
+                        unset($_SESSION['pending_order']);
+
+                        echo "<script>window.location.href='giohang.php?success=1&order_id=$order_id';</script>";
+                        exit();
+                    } else {
+                        // Xóa đơn hàng tạm thời
+                        $stmt_delete_order = $conn->prepare("DELETE FROM oder WHERE id = ? AND trangthai = 'Pending Payment'");
+                        $stmt_delete_order->bind_param("i", $order_id);
+                        $stmt_delete_order->execute();
+                        $stmt_delete_order->close();
+
+                        unset($_SESSION['pending_order']);
+
+                        echo "<script>alert('Thanh toán không thành công hoặc đã bị hủy. Giỏ hàng của bạn vẫn được giữ nguyên.'); window.location.href = 'giohang.php';</script>";
+                        exit();
+                    }
+                } catch (Exception $e) {
+                    $conn->rollback();
+                    echo "<script>alert('Lỗi khi hoàn tất đơn hàng: " . $e->getMessage() . "'); window.location.href = 'giohang.php';</script>";
+                    exit();
+                }
+            } else {
+                echo "<script>alert('Không tìm thấy đơn hàng.'); window.location.href = 'giohang.php';</script>";
+                exit();
+            }
+            break;
+
+        case "notify":
+            $data = json_decode(file_get_contents('php://input'), true);
+            if ($data['resultCode'] == 0) {
+                $order_id = explode("_", $data['orderId'])[0];
+                $conn->begin_transaction();
+                try {
+                    // Lấy thông tin đơn hàng tạm thời từ session
+                    if (!isset($_SESSION['pending_order']) || $_SESSION['pending_order']['order_id'] != $order_id) {
+                        throw new Exception("Không tìm thấy thông tin đơn hàng tạm thời.");
+                    }
+
+                    $order_items = $_SESSION['pending_order']['items'];
+                    $discount_code = $_SESSION['pending_order']['discount_code'];
+
+                    // Cập nhật trạng thái đơn hàng
+                    $trangthai = 'Chờ xác nhận';
+                    $stmt = $conn->prepare("UPDATE oder SET payment_status = 'Đã thanh toán', trangthai = ? WHERE id = ?");
+                    $stmt->bind_param("si", $trangthai, $order_id);
                     $stmt->execute();
-                    $order_id = $conn->insert_id;
-
-                    $stmt_update_trangthai = $conn->prepare("UPDATE oder SET trangthai = ? WHERE id = ?");
-                    $stmt_update_trangthai->bind_param("si", $trangthai, $order_id);
-                    $stmt_update_trangthai->execute();
-                    $stmt_update_trangthai->close();
+                    $stmt->close();
 
                     if (!empty($discount_code)) {
                         $stmt_update_discount = $conn->prepare("UPDATE discount_codes SET used_count = used_count + 1 WHERE code = ?");
@@ -297,6 +605,7 @@ if (isset($_GET['action'])) {
                         $stmt_update_discount->close();
                     }
 
+                    // Chèn chi tiết đơn hàng
                     $stmt_detail = $conn->prepare("INSERT INTO oder_detail (oder_id, sanpham_id, soluong, gia, subtotal) VALUES (?, ?, ?, ?, ?)");
                     $stmt_update_stock = $conn->prepare("UPDATE sanpham SET soluong = soluong - ? WHERE id = ?");
                     $stmt_delete_cart = $conn->prepare("DELETE FROM cart_item WHERE user_id = ? AND sanpham_id = ?");
@@ -315,109 +624,13 @@ if (isset($_GET['action'])) {
                     $stmt_update_stock->close();
                     $stmt_delete_cart->close();
 
-                    if ($payment_method == 'Thanh toán MoMo') {
-                        $endpoint = "https://test-payment.momo.vn/v2/gateway/api/create";
-                        $partnerCode = "MOMO";
-                        $accessKey = "F8BBA842ECF85";
-                        $secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
-                        $orderInfo = "pay with MoMo";
-                        $amount = (int)$total_payment;
-                        $orderId = $order_id . "_" . time();
-                        $redirectUrl = "http://localhost/BAOCAO/giohang.php?action=callback&order_id=$order_id";
-                        $notifyUrl = "http://localhost/BAOCAO/giohang.php?action=notify";
-                        $requestId = time() . "";
-                        $requestType = "payWithMethod";
-                        $extraData = "";
-                        $partnerName = "MoMo Payment";
-                        $storeId = "Test Store";
-                        $lang = "vi";
-                        $autoCapture = true;
+                    $conn->commit();
 
-                        $rawHash = "accessKey=$accessKey&amount=$amount&extraData=$extraData&ipnUrl=$notifyUrl&orderId=$orderId&orderInfo=$orderInfo&partnerCode=$partnerCode&redirectUrl=$redirectUrl&requestId=$requestId&requestType=$requestType";
-                        $signature = hash_hmac("sha256", $rawHash, $secretKey);
-
-                        $data = [
-                            "partnerCode" => $partnerCode,
-                            "partnerName" => $partnerName,
-                            "storeId" => $storeId,
-                            "requestId" => $requestId,
-                            "amount" => $amount,
-                            "orderId" => $orderId,
-                            "orderInfo" => $orderInfo,
-                            "redirectUrl" => $redirectUrl,
-                            "ipnUrl" => $notifyUrl,
-                            "lang" => $lang,
-                            "autoCapture" => $autoCapture,
-                            "extraData" => $extraData,
-                            "requestType" => $requestType,
-                            "signature" => $signature
-                        ];
-
-                        $ch = curl_init($endpoint);
-                        curl_setopt($ch, CURLOPT_POST, true);
-                        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
-                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                        $result = curl_exec($ch);
-                        curl_close($ch);
-
-                        $response = json_decode($result, true);
-                        if (isset($response['payUrl'])) {
-                            header("Location: " . $response['payUrl']);
-                            exit();
-                        } else {
-                            $stmt_delete_order = $conn->prepare("DELETE FROM oder WHERE id = ?");
-                            $stmt_delete_order->bind_param("i", $order_id);
-                            $stmt_delete_order->execute();
-                            $stmt_delete_order->close();
-
-                            echo "<script>alert('Lỗi MoMo: " . ($response['message'] ?? 'Không có phản hồi') . "'); window.location.href = 'giohang.php';</script>";
-                            exit();
-                        }
-                    } else {
-                        header('Location: giaidoan.php');
-                        exit();
-                    }
+                    unset($_SESSION['pending_order']);
+                } catch (Exception $e) {
+                    $conn->rollback();
+                    // Ghi log lỗi nếu cần
                 }
-            }
-            break;
-
-        case "callback":
-            if (isset($_GET['resultCode']) && $_GET['resultCode'] == "0" && isset($_GET['order_id'])) {
-                $order_id = $_GET['order_id'];
-                $stmt = $conn->prepare("UPDATE oder SET payment_status = 'Đã thanh toán' WHERE id = ?");
-                $stmt->bind_param("i", $order_id);
-                $stmt->execute();
-                $stmt->close();
-                header("Location: giohang.php?success=1&order_id=$order_id");
-                exit();
-            } else {
-                $order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
-                if ($order_id > 0) {
-                    $stmt_delete_details = $conn->prepare("DELETE FROM oder_detail WHERE oder_id = ?");
-                    $stmt_delete_details->bind_param("i", $order_id);
-                    $stmt_delete_details->execute();
-                    $stmt_delete_details->close();
-
-                    $stmt_delete_order = $conn->prepare("DELETE FROM oder WHERE id = ?");
-                    $stmt_delete_order->bind_param("i", $order_id);
-                    $stmt_delete_order->execute();
-                    $stmt_delete_order->close();
-                }
-                echo "<script>alert('Không thành công'); window.location.href = 'shop.php';</script>";
-                exit();
-            }
-            break;
-
-        case "notify":
-            $data = json_decode(file_get_contents('php://input'), true);
-            if ($data['resultCode'] == 0) {
-                $order_id = explode("_", $data['orderId'])[0];
-                $stmt = $conn->prepare("UPDATE oder SET payment_status = 'Đã thanh toán' WHERE id = ?");
-                $stmt->bind_param("i", $order_id);
-                $stmt->execute();
-                $stmt->close();
             }
             exit();
     }
@@ -440,7 +653,7 @@ $buy_now_product_id = isset($_GET['buy_now']) ? intval($_GET['buy_now']) : null;
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-<form action="giohang.php?action=submit" method="POST" id="cartForm">
+<form action="giohang.php?action=submit" method="POST" id="cartForm" autocomplete="off">
     <?php if (!empty($cart_items)) { ?>
         <div class="shipping-info">
             <h1><i class="bi bi-geo-alt-fill"></i> Địa Chỉ Nhận Hàng</h1>
@@ -475,31 +688,25 @@ $buy_now_product_id = isset($_GET['buy_now']) ? intval($_GET['buy_now']) : null;
             </div>
             <div class="txtb">
                 <label>Tỉnh/Thành phố: <span style="color: red;">(*)</span></label>
-                <select id="province" name="province" required>
+                <select id="province" name="province">
                     <option value="">Chọn tỉnh/thành phố</option>
-                    <?php
-                    $sql_provinces_list = "SELECT name FROM provinces";
-                    $result_provinces_list = $conn->query($sql_provinces_list);
-                    while ($row = $result_provinces_list->fetch_assoc()) {
-                        $selected = ($row['name'] === $province) ? 'selected' : '';
-                        echo "<option value='{$row['name']}' $selected>{$row['name']}</option>";
-                    }
-                    ?>
                 </select>
                 <input type="hidden" id="province_name" name="province_name" value="<?= htmlspecialchars($province); ?>">
                 <p style="color: red;"><?php echo $error8; ?></p>
             </div>
+
             <div class="txtb">
                 <label>Quận/Huyện: <span style="color: red;">(*)</span></label>
-                <select id="district" name="district" required>
+                <select id="district" name="district">
                     <option value="">Chọn quận/huyện</option>
                 </select>
                 <input type="hidden" id="district_name" name="district_name" value="<?= htmlspecialchars($district); ?>">
                 <p style="color: red;"><?php echo $error9; ?></p>
             </div>
+
             <div class="txtb">
                 <label>Phường/Xã: <span style="color: red;">(*)</span></label>
-                <select id="ward" name="ward" required>
+                <select id="ward" name="ward">
                     <option value="">Chọn phường/xã</option>
                 </select>
                 <input type="hidden" id="ward_name" name="ward_name" value="<?= htmlspecialchars($ward); ?>">
@@ -673,7 +880,17 @@ $buy_now_product_id = isset($_GET['buy_now']) ? intval($_GET['buy_now']) : null;
                                 <span><strong>Thanh toán MoMo</strong></span>
                             </div>
                             <div class="method-description">
-                                <p>Thanh toán qua ví MoMo.</p>
+                                <p>Thanh toán qua ví điện tử MoMo.</p>
+                            </div>
+                        </div>
+                    </button>
+                    <button type="button" class="payment-option" data-method="Thanh toán VNPAY">
+                        <div class="payment-content">
+                            <div class="method-header">
+                                <span><strong>Thanh toán VNPAY</strong></span>
+                            </div>
+                            <div class="method-description">
+                                <p>Thanh toán qua ví điện tử VNPAY.</p>
                             </div>
                         </div>
                     </button>
@@ -720,90 +937,289 @@ $buy_now_product_id = isset($_GET['buy_now']) ? intval($_GET['buy_now']) : null;
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM loaded and script is running");
 
-    fetch("https://provinces.open-api.vn/api/p/")
-        .then(response => response.json())
-        .then(data => {
-            let provinceSelect = document.getElementById("province");
-            data.forEach(province => {
-                let option = document.createElement("option");
-                option.value = province.code;
-                option.textContent = province.name;
-                if (province.name === "<?= htmlspecialchars($province) ?>") {
-                    option.selected = true;
+    // Only attach form submit validation if there are cart items
+    <?php if (!empty($cart_items)) { ?>
+        const cartForm = document.getElementById('cartForm');
+        if (cartForm) {
+            cartForm.addEventListener('submit', function(event) {
+                var checkedCheckboxes = document.querySelectorAll('input[name="selected_products[]"]:checked');
+                if (checkedCheckboxes.length === 0) {
+                    event.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Chưa chọn sản phẩm',
+                        text: 'Vui lòng chọn ít nhất một sản phẩm để thanh toán',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
                 }
-                provinceSelect.appendChild(option);
-            });
 
-            if (provinceSelect.value) {
-                loadDistricts(provinceSelect.value);
-                updateShippingCostFromDB();
-                calculateTotalWithDiscount();
+                const hoten = document.querySelector('input[name="hoten"]')?.value.trim() || '';
+                const sdt = document.querySelector('input[name="sdt"]')?.value.trim() || '';
+                const address = document.querySelector('input[name="address"]')?.value.trim() || '';
+                const provinceName = document.getElementById('province_name')?.value.trim() || '';
+                const districtName = document.getElementById('district_name')?.value.trim() || '';
+                const wardName = document.getElementById('ward_name')?.value.trim() || '';
+
+                if (!hoten || !sdt || !address || !provinceName || !districtName || !wardName) {
+                    event.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Thiếu thông tin',
+                        text: 'Vui lòng nhập đầy đủ thông tin địa chỉ nhận hàng trước khi đặt hàng!',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+            });
+        }
+    <?php } ?>
+
+    // Load provinces only when the modal is opened
+    const changeBtn = document.querySelector('.change-btn');
+    let provincesLoaded = false;
+
+    if (changeBtn) {
+        changeBtn.addEventListener('click', function() {
+            const modal = document.getElementById('edit-address-modal');
+            if (modal) {
+                modal.style.display = "block";
+                centerModal();
+                disableScroll();
+
+                // Load provinces if not already loaded
+                if (!provincesLoaded) {
+                    fetch("https://provinces.open-api.vn/api/p/")
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Province options loaded:", data);
+                            let provinceSelect = document.getElementById("province");
+                            if (!provinceSelect) {
+                                console.error("Province select element not found!");
+                                return;
+                            }
+
+                            provinceSelect.innerHTML = '<option value="">Chọn tỉnh/thành phố</option>';
+                            data.forEach(province => {
+                                let option = document.createElement("option");
+                                option.value = province.code;
+                                option.textContent = province.name;
+                                if (province.name === "<?= htmlspecialchars($province) ?>") {
+                                    option.selected = true;
+                                }
+                                provinceSelect.appendChild(option);
+                            });
+
+                            provincesLoaded = true;
+
+                            if (provinceSelect.value) {
+                                console.log("Initial province selected, loading districts for provinceCode:", provinceSelect.value);
+                                loadDistricts(provinceSelect.value);
+                                updateShippingCostFromDB();
+                                calculateTotalWithDiscount();
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error loading provinces:", error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi',
+                                text: 'Không thể tải danh sách tỉnh/thành phố. Vui lòng thử lại!',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#ee4d2d'
+                            });
+                        });
+                }
             }
         });
+    }
 
-    document.getElementById("province").addEventListener("change", function() {
-        let provinceCode = this.value;
-        let provinceName = this.options[this.selectedIndex].text;
-        document.getElementById("province_name").value = provinceName;
-        loadDistricts(provinceCode);
-        updateShippingCostFromDB();
-        calculateTotalWithDiscount();
-    });
+    // Handle province change
+    const provinceSelect = document.getElementById("province");
+    if (provinceSelect) {
+        provinceSelect.addEventListener("change", function() {
+            let provinceCode = this.value;
+            let provinceName = this.options[this.selectedIndex].text;
+            console.log("Province changed, provinceCode:", provinceCode, "provinceName:", provinceName);
+            
+            document.getElementById("province_name").value = provinceName;
 
+            let districtSelect = document.getElementById("district");
+            let wardSelect = document.getElementById("ward");
+            if (districtSelect) {
+                districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+                document.getElementById("district_name").value = "";
+            }
+            if (wardSelect) {
+                wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+                document.getElementById("ward_name").value = "";
+            }
+
+            if (provinceCode) {
+                loadDistricts(provinceCode);
+            }
+            updateShippingCostFromDB();
+            calculateTotalWithDiscount();
+        });
+    }
+
+    // Handle district change
     document.getElementById("district").addEventListener("change", function() {
         let districtCode = this.value;
         let districtName = this.options[this.selectedIndex].text;
+        console.log("District changed, districtCode:", districtCode, "districtName:", districtName);
         document.getElementById("district_name").value = districtName;
         loadWards(districtCode);
+
+        let wardSelect = document.getElementById("ward");
+        if (wardSelect) {
+            wardSelect.value = "";
+            document.getElementById("ward_name").value = "";
+        }
     });
 
+    // Handle ward change
     document.getElementById("ward").addEventListener("change", function() {
         let wardName = this.options[this.selectedIndex].text;
+        console.log("Ward changed, wardName:", wardName);
         document.getElementById("ward_name").value = wardName;
     });
 
     function loadDistricts(provinceCode) {
-        fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
-            .then(response => response.json())
-            .then(data => {
-                let districtSelect = document.getElementById("district");
-                districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-                data.districts.forEach(district => {
-                    let option = document.createElement("option");
-                    option.value = district.code;
-                    option.textContent = district.name;
-                    if (district.name === "<?= htmlspecialchars($district) ?>") {
-                        option.selected = true;
-                    }
-                    districtSelect.appendChild(option);
-                });
+        if (!provinceCode) {
+            console.warn("No provinceCode provided, cannot load districts.");
+            return;
+        }
 
-                if (districtSelect.value) {
-                    loadWards(districtSelect.value);
+        console.log("Fetching districts for provinceCode:", provinceCode);
+        fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Districts data:", data);
+                let districtSelect = document.getElementById("district");
+                if (!districtSelect) {
+                    console.error("District select element not found!");
+                    return;
+                }
+
+                districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+                if (data.districts && data.districts.length > 0) {
+                    data.districts.forEach(district => {
+                        let option = document.createElement("option");
+                        option.value = district.code;
+                        option.textContent = district.name;
+                        if (district.name === "<?= htmlspecialchars($district) ?>") {
+                            option.selected = true;
+                        }
+                        districtSelect.appendChild(option);
+                    });
+
+                    if (districtSelect.value) {
+                        console.log("District selected after load, loading wards for districtCode:", districtSelect.value);
+                        loadWards(districtSelect.value);
+                    }
+                } else {
+                    console.warn("No districts found for provinceCode:", provinceCode);
+                    districtSelect.disabled = true;
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Cảnh báo',
+                        text: 'Không tìm thấy quận/huyện cho tỉnh này!',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#ee4d2d'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error loading districts:", error);
+                let districtSelect = document.getElementById("district");
+                if (districtSelect) {
+                    districtSelect.disabled = true;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Không thể tải danh sách quận/huyện. Vui lòng thử lại!',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#ee4d2d'
+                });
             });
     }
 
     function loadWards(districtCode) {
-        fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
-            .then(response => response.json())
-            .then(data => {
-                let wardSelect = document.getElementById("ward");
-                wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
-                data.wards.forEach(ward => {
-                    let option = document.createElement("option");
-                    option.value = ward.code;
-                    option.textContent = ward.name;
-                    if (ward.name === "<?= htmlspecialchars($ward) ?>") {
-                        option.selected = true;
-                    }
-                    wardSelect.appendChild(option);
-                });
+        if (!districtCode) {
+            console.warn("No districtCode provided, cannot load wards.");
+            return;
+        }
 
-                if (wardSelect.value) {
-                    let wardName = wardSelect.options[wardSelect.selectedIndex].text;
-                    document.getElementById("ward_name").value = wardName;
+        console.log("Fetching wards for districtCode:", districtCode);
+        fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Wards data:", data);
+                let wardSelect = document.getElementById("ward");
+                if (!wardSelect) {
+                    console.error("Ward select element not found!");
+                    return;
+                }
+
+                wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+                if (data.wards && data.wards.length > 0) {
+                    data.wards.forEach(ward => {
+                        let option = document.createElement("option");
+                        option.value = ward.code;
+                        option.textContent = ward.name;
+                        if (ward.name === "<?= htmlspecialchars($ward) ?>") {
+                            option.selected = true;
+                        }
+                        wardSelect.appendChild(option);
+                    });
+
+                    if (wardSelect.value) {
+                        let wardName = wardSelect.options[wardSelect.selectedIndex].text;
+                        document.getElementById("ward_name").value = wardName;
+                        console.log("Ward selected after load, wardName:", wardName);
+                    }
+                } else {
+                    console.warn("No wards found for districtCode:", districtCode);
+                    wardSelect.disabled = true;
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Cảnh báo',
+                        text: 'Không tìm thấy phường/xã cho quận/huyện này!',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#ee4d2d'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error loading wards:", error);
+                let wardSelect = document.getElementById("ward");
+                if (wardSelect) {
+                    wardSelect.disabled = true;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Không thể tải danh sách phường/xã. Vui lòng thử lại!',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#ee4d2d'
+                });
             });
     }
 
@@ -881,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        let cleanProvinceName = provinceName.replace(/^Tỉnh\s/, '');
+        let cleanProvinceName = provinceName.replace(/^(Tỉnh|Thành phố)\s/, '');
         let shippingMethodId = document.getElementById("shipping_method").value;
         let provinces = <?= json_encode($provinces) ?>;
         let distance = provinces[cleanProvinceName] || 0;
@@ -901,8 +1317,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('shipping_cost').value = shippingCost;
         document.getElementById('total_shipping').innerText = shippingCost.toLocaleString('vi-VN') + ' VNĐ';
 
-        console.log("Updated shipping cost for " + cleanProvinceName + ": " + shippingCost + " VNĐ (Distance: " + distance + " km, Cost per km: " + shippingCostPerKm + " VND/km, Method ID: " + shippingMethodId + ")");
-
+        console.log("Updated shipping cost for " + cleanProvinceName + ": " + shippingCost + " VNĐ");
         calculateTotalWithDiscount();
     }
 
@@ -924,26 +1339,43 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateTotalWithDiscount();
     }
 
-    window.toggleSelectAll = function() {
-        var selectAllCheckbox = document.getElementById('select_all');
-        var checkboxes = document.querySelectorAll('input[name="selected_products[]"]');
-        checkboxes.forEach(function(checkbox) {
-            checkbox.checked = selectAllCheckbox.checked;
-        });
-        calculateTotalWithDiscount();
-    }
+    // Hàm đồng bộ checkbox "chọn tất cả" và các checkbox sản phẩm
+window.toggleSelectAll = function() {
+    const selectAllCheckbox = document.getElementById('select_all');
+    const productCheckboxes = document.querySelectorAll('input[name="selected_products[]"]');
+    
+    // Đồng bộ từ "chọn tất cả" sang các checkbox sản phẩm
+    productCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    // Cập nhật tổng tiền
+    calculateTotalWithDiscount();
+    };
 
+    // Hàm kiểm tra và cập nhật trạng thái checkbox "chọn tất cả" dựa trên các checkbox sản phẩm
+    window.updateSelectAll = function() {
+        const selectAllCheckbox = document.getElementById('select_all');
+        const productCheckboxes = document.querySelectorAll('input[name="selected_products[]"]');
+        const allChecked = Array.from(productCheckboxes).every(checkbox => checkbox.checked);
+        
+        selectAllCheckbox.checked = allChecked;
+        
+        // Cập nhật tổng tiền
+        calculateTotalWithDiscount();
+    };
+
+    // Gắn sự kiện cho checkbox "chọn tất cả"
     const selectAllCheckbox = document.getElementById('select_all');
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', toggleSelectAll);
     }
 
+    // Gắn sự kiện cho các checkbox sản phẩm
     const productCheckboxes = document.querySelectorAll('input[name="selected_products[]"]');
     if (productCheckboxes.length > 0) {
         productCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                calculateTotalWithDiscount();
-            });
+            checkbox.addEventListener('change', updateSelectAll);
         });
     }
 
@@ -1005,20 +1437,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const modal = document.getElementById('edit-address-modal');
-    const btn = document.querySelector('.change-btn');
     const span = document.querySelector('.close-btn');
     const saveBtn = document.querySelector('.save-btn');
     const defaultBtn = document.querySelector('.default-btn');
-
-    if (btn) {
-        btn.addEventListener('click', function() {
-            if (modal) {
-                modal.style.display = "block";
-                centerModal();
-                disableScroll();
-            }
-        });
-    }
 
     if (span) {
         span.addEventListener('click', function() {
@@ -1061,15 +1482,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     data: { hoten: hoten, sdt: sdt, diachi: fullAddress, user_id: '<?= $user_id ?>' },
                     success: function(response) {
                         console.log('Cập nhật thành công:', response);
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thành công',
+                            text: 'Thay đổi thông tin thành công!',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#ee4d2d'
+                        });
                     },
                     error: function(xhr, status, error) {
                         console.error('Lỗi khi cập nhật:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: 'Có lỗi xảy ra khi cập nhật thông tin!',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#ee4d2d'
+                        });
                     }
                 });
                 updateShippingCostFromDB();
                 calculateTotalWithDiscount();
             } else {
-                Swal.fire({ icon: 'warning', title: 'Lỗi', text: 'Vui lòng điền đầy đủ thông tin!', confirmButtonText: 'OK', confirmButtonColor: '#ee4d2d' });
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Lỗi',
+                    text: 'Vui lòng điền đầy đủ thông tin!',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#ee4d2d'
+                });
             }
         });
     }
@@ -1100,17 +1541,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function enableScroll() {
         document.body.style.overflow = 'auto';
-    }
-
-    const cartForm = document.getElementById('cartForm');
-    if (cartForm) {
-        cartForm.addEventListener('submit', function(event) {
-            var checkedCheckboxes = document.querySelectorAll('input[name="selected_products[]"]:checked');
-            if (checkedCheckboxes.length === 0) {
-                event.preventDefault();
-                Swal.fire({ icon: 'warning', title: 'Lỗi', text: 'Vui lòng chọn ít nhất một sản phẩm để thanh toán', confirmButtonText: 'OK', confirmButtonColor: '#ee4d2d' });
-            }
-        });
     }
 
     if (document.querySelectorAll('input[name="selected_products[]"]').length > 0) {
@@ -1274,7 +1704,6 @@ document.addEventListener('DOMContentLoaded', function() {
     background-color: #d04526;
 }
 
-/* Modal Styles */
 .modal {
     display: none;
     position: fixed;

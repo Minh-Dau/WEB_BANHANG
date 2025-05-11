@@ -62,6 +62,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $trangthai = $_POST["trangthai"];
     $danhmuc_id = (int)$_POST["danhmuc_id"]; 
 
+    // Kiểm tra giá nhập và giá bán
+    if ($gia_nhap >= $gia) {
+        $response['message'] = 'Giá nhập không được lớn hơn hoặc bằng giá bán!';
+        echo json_encode($response);
+        exit;
+    }
     // Kiểm tra dữ liệu đầu vào
     if (empty($tensanpham)) {
         echo json_encode(["status" => "error", "message" => "Tên sản phẩm không được để trống!"]);

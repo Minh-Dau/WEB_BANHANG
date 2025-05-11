@@ -110,7 +110,7 @@ $conn->close();
     <form id="trangdangnhap" action="dangnhap.php" method="POST">
         <div class="taikhoan">
             <h2>ĐĂNG NHẬP TÀI KHOẢN TẠI ĐÂY</h2>
-            <p class="thep">Bạn chưa có tài khoản?<a href="dangky.php"> Đăng ký tại đây</a></p>
+            <p class="thep">Bạn chưa có tài khoản?<a href="dangky.php" style="color: blue;"> Đăng ký tại đây</a></p>
             <div class="cha">
                 <input type="text" name="username" class="input-group_gmail" required id="email">
                 <label for="email" class="input-group_label_gmail"> Tài Khoản <span>*</span> </label>
@@ -126,21 +126,17 @@ $conn->close();
                         <td><p>Hiển thị mật khẩu</p></td>
                     </tr>   
                 </table>
-                <p>Quên mật khẩu?<a href="quenmatkhau.php" class="a_quenmk"> Nhấn vào đây</a></p>
+                <p>Quên mật khẩu?<a href="quenmatkhau.php" class="a_quenmk" style="color: blue;"> Nhấn vào đây</a></p>
                 <div class="cha">
                     <button class="click" name="dangnhap">Đăng Nhập</button>
                 </div>
             </div>
         </div>
     </form>
-
     <br>
     <div>
         <?php include 'footer.php'; ?>
-        <hr>
-        <p style="font-size: 17px;" align="center" class="banquyen">Copyright © 2025 Hustler Stonie</p>
     </div>
-
     <script>
         // Show password toggle
         var pass = document.getElementById("pass");

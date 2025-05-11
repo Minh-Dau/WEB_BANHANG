@@ -66,6 +66,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $danhmuc_id = isset($_POST["danhmuc_id"]) ? (int)$_POST["danhmuc_id"] : 0;
     $trangthai = isset($_POST["trangthai"]) ? trim($_POST["trangthai"]) : '';
 
+    // Kiểm tra giá nhập và giá bán
+    if ($gia_nhap >= $gia) {
+        $response['message'] = 'Giá nhập không được lớn hơn hoặc bằng giá bán!';
+        echo json_encode($response);
+        exit;
+    }
     // Basic validation
     if ($id <= 0 || empty($tensanpham) || $gia < 0 || $gia_nhap < 0 || $soluong < 0 || $danhmuc_id <= 0) {
         echo json_encode(["status" => "error", "message" => "Invalid input data"]);

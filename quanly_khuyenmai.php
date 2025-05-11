@@ -160,12 +160,12 @@ $conn->close();
             <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                 <div class="sb-sidenav-menu">
                     <div class="nav">
-                        <div class="sb-sidenav-menu-heading">Core</div>
+                        <div class="sb-sidenav-menu-heading">Thống kê</div>
                         <a class="nav-link" href="admin.php">
                             <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                            QUẢN LÝ
+                            THỐNG KÊ
                         </a>
-                        <div class="sb-sidenav-menu-heading">Addons</div>
+                        <div class="sb-sidenav-menu-heading">Quản lý</div>
                         <a class="nav-link" href="quanlysanpham.php">
                             <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                             QUẢN LÝ SẢN PHẨM
@@ -212,7 +212,7 @@ $conn->close();
                 <div class="container-fluid px-4">
                     <h1 class="mt-4">QUẢN LÝ MÃ GIẢM GIÁ</h1>
                     <ol class="breadcrumb mb-4">
-                        <li class="breadcrumb-item"><a href="index.html">QUẢN LÝ</a></li>
+                        <li class="breadcrumb-item"><a href="http://localhost/BAOCAO/quanly_khuyenmai.php">QUẢN LÝ</a></li>
                         <li class="breadcrumb-item active">QUẢN LÝ MÃ GIẢM GIÁ</li>
                     </ol>
                     <div class="card mb-4">
@@ -257,7 +257,7 @@ $conn->close();
                                 <tbody>
                                     <?php
                                     include 'config.php';
-                                    $sql = "SELECT * FROM discount_codes";
+                                    $sql = "SELECT * FROM discount_codes ORDER BY id DESC";
                                     $result = $conn->query($sql);
                                     if ($result->num_rows > 0) {
                                         while ($row = $result->fetch_assoc()) {
@@ -265,7 +265,15 @@ $conn->close();
                                             echo "<td>" . htmlspecialchars($row["code"]) . "</td>";
                                             echo "<td>" . htmlspecialchars($row["discount_type"]) . "</td>";
                                             
-                                            echo "<td>" . number_format($row["discount_value"], 0, ',', '.') . " VND</td>";
+                                            // Kiểm tra loại giảm giá để hiển thị % hoặc VND
+                                            echo "<td>";
+                                            if ($row["discount_type"] === "percent") {
+                                                echo number_format($row["discount_value"], 0, ',', '.') . " %";
+                                            } else {
+                                                echo number_format($row["discount_value"], 0, ',', '.') . " VND";
+                                            }
+                                            echo "</td>";
+
                                             echo "<td>" . number_format($row["min_order_value"], 0, ',', '.') . " VND</td>";
                                             echo "<td>" . $row["max_uses"] . "</td>";
                                             echo "<td>" . $row["used_count"] . "</td>";

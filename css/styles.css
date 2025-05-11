@@ -1759,6 +1759,8 @@ progress {
   background-color: var(--bs-table-bg);
   border-bottom-width: 1px;
   box-shadow: inset 0 0 0 9999px var(--bs-table-accent-bg);
+  vertical-align: middle;
+  
 }
 .table > tbody, .datatable-table > tbody {
   vertical-align: inherit;
@@ -4249,6 +4251,7 @@ textarea.form-control-lg {
 }
 .card-header:first-child {
   border-radius: var(--bs-card-inner-border-radius) var(--bs-card-inner-border-radius) 0 0;
+  padding-top: 25px;
 }
 
 .card-footer {
@@ -10906,7 +10909,7 @@ body {
     transition: margin 0.15s ease-in-out;
   }
   .sb-sidenav-toggled #layoutSidenav #layoutSidenav_nav {
-    transform: translateX(-225px);
+    transform: translateX(-250px);
   }
   .sb-sidenav-toggled #layoutSidenav #layoutSidenav_content {
     margin-left: -225px;
@@ -10919,7 +10922,7 @@ body {
   z-index: 1039;
 }
 .sb-nav-fixed #layoutSidenav #layoutSidenav_nav {
-  width: 225px;
+  width: 250px;
   height: 100vh;
   z-index: 1038;
 }
@@ -10930,7 +10933,7 @@ body {
   overflow-y: auto;
 }
 .sb-nav-fixed #layoutSidenav #layoutSidenav_content {
-  padding-left: 225px;
+  padding-left: 250px;
   top: 56px;
 }
 

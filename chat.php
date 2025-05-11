@@ -163,7 +163,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer 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',
+            'Authorization': 'Bearer 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',
             'HTTP-Referer': window.location.origin,
             'X-Title': 'E-commerce Chatbot'
           },

@@ -28,67 +28,80 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sdt = $_POST['sdt'];
     $hoten = $_POST['hoten'];
 
-    // Construct the new diachi from the selected fields
-    $specific_address = trim($_POST['specific_address']);
-    $province_name = trim($_POST['province_name']);
-    $district_name = trim($_POST['district_name']);
-    $ward_name = trim($_POST['ward_name']);
+    // Kiểm tra số điện thoại
+    if (!preg_match('/^(03|05|07|08|09)[0-9]{8}$/', $sdt)) {
+        $notification = 'phone_invalid';
+    } else {
+        // Construct the new diachi from the selected fields
+        $specific_address = trim($_POST['specific_address']);
+        $province_name = trim($_POST['province_name']);
+        $district_name = trim($_POST['district_name']);
+        $ward_name = trim($_POST['ward_name']);
 
-    // Filter out empty address components and join with commas
-    $address_components = array_filter([$specific_address, $ward_name, $district_name, $province_name], function($value) {
-        return !empty($value);
-    });
-    $diachi = mysqli_real_escape_string($conn, implode(', ', $address_components));
+        // Filter out empty address components and join with commas
+        $address_components = array_filter([$specific_address, $ward_name, $district_name, $province_name], function($value) {
+            return !empty($value);
+        });
+        $diachi = mysqli_real_escape_string($conn, implode(', ', $address_components));
 
-    // Update user information if there are changes
-    if ($email != $user['email'] || $sdt != $user['sdt'] || $diachi != $user['diachi'] || $hoten != $user['hoten']) {
-        $update_query = "UPDATE frm_dangky SET email='$email', sdt='$sdt', diachi='$diachi', hoten='$hoten' WHERE username='$username'";
-        if (mysqli_query($conn, $update_query)) {
-            $notification = 'update_success';
+        // Update user information if there are changes
+        if ($email != $user['email'] || $sdt != $user['sdt'] || $diachi != $user['diachi'] || $hoten != $user['hoten']) {
+            $update_query = "UPDATE frm_dangky SET email='$email', sdt='$sdt', diachi='$diachi', hoten='$hoten' WHERE username='$username'";
+            if (mysqli_query($conn, $update_query)) {
+                $notification = 'update_success';
+            }
         }
-    }
 
-    // Xử lý upload ảnh
-    if (!empty($_FILES["anh"]["name"])) {
-        $target_dir = "uploads/";
-        if (!is_dir($target_dir)) {
-            mkdir($target_dir, 0777, true); 
-        }
-        $imageFileType = strtolower(pathinfo($_FILES["anh"]["name"], PATHINFO_EXTENSION));
-        $allowed_types = array("jpg", "jpeg", "png", "gif");
-    
-        if (in_array($imageFileType, $allowed_types)) {
-            $target_file = $target_dir . md5(time() . $username) . "." . $imageFileType; 
-    
-            if (move_uploaded_file($_FILES["anh"]["tmp_name"], $target_file)) {
-                if ($target_file != $user['anh']) {
-                    $update_image_query = "UPDATE frm_dangky SET anh='$target_file' WHERE username='$username'";
-                    if (mysqli_query($conn, $update_image_query)) {
-                        $notification = 'image_success';
+        // Xử lý upload ảnh
+        if (!empty($_FILES["anh"]["name"])) {
+            $target_dir = "uploads/";
+            if (!is_dir($target_dir)) {
+                mkdir($target_dir, 0777, true); 
+            }
+            $imageFileType = strtolower(pathinfo($_FILES["anh"]["name"], PATHINFO_EXTENSION));
+            $allowed_types = array("jpg", "jpeg", "png", "gif");
+        
+            if (in_array($imageFileType, $allowed_types)) {
+                $target_file = $target_dir . md5(time() . $username) . "." . $imageFileType; 
+        
+                if (move_uploaded_file($_FILES["anh"]["tmp_name"], $target_file)) {
+                    if ($target_file != $user['anh']) {
+                        $update_image_query = "UPDATE frm_dangky SET anh='$target_file' WHERE username='$username'";
+                        if (mysqli_query($conn, $update_image_query)) {
+                            $notification = 'image_success';
+                        }
                     }
+                } else {
+                    $notification = 'image_upload_error';
                 }
             } else {
-                $notification = 'image_upload_error';
+                $notification = 'image_type_error';
             }
-        } else {
-            $notification = 'image_type_error';
+        }
+
+        // Xử lý cập nhật mật khẩu
+        if (!empty($_POST['password']) && !empty($_POST['confirm_password'])) {
+            $password = $_POST['password'];
+            $confirm_password = $_POST['confirm_password'];
+
+            if ($password === $confirm_password) {
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $update_pass_query = "UPDATE frm_dangky SET password='$hashed_password' WHERE username='$username'";
+                if (mysqli_query($conn, $update_pass_query)) {
+                    $notification = 'password_success';
+                }
+            } else {
+                $notification = 'password_mismatch';
+            }
         }
     }
+}
 
-    // Xử lý cập nhật mật khẩu
-    if (!empty($_POST['password']) && !empty($_POST['confirm_password'])) {
-        $password = $_POST['password'];
-        $confirm_password = $_POST['confirm_password'];
-
-        if ($password === $confirm_password) {
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $update_pass_query = "UPDATE frm_dangky SET password='$hashed_password' WHERE username='$username'";
-            if (mysqli_query($conn, $update_pass_query)) {
-                $notification = 'password_success';
-            }
-        } else {
-            $notification = 'password_mismatch';
-        }
+if (isset($_POST['khoa_taikhoan'])) {
+    $update_status_query = "UPDATE frm_dangky SET trangthai='đã khóa' WHERE username='$username'";
+    if (mysqli_query($conn, $update_status_query)) {
+        session_destroy(); // Xóa session để đăng xuất
+        $notification = 'account_locked';
     }
 }
 ?>
@@ -119,7 +132,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <input type="text" id="name" name="hoten" value="<?= htmlspecialchars($user['hoten']); ?>" required>
 
             <label for="phone">Số điện thoại</label>
-            <input type="text" id="phone" name="sdt" value="<?= htmlspecialchars($user['sdt']); ?>" required pattern="^0[0-9]{9}$" title="Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0">
+            <input type="text" id="phone" name="sdt" value="<?= htmlspecialchars($user['sdt']); ?>" required pattern="^(03|05|07|08|09)[0-9]{8}$" title="Số điện thoại phải có 10 chữ số và bắt đầu bằng 03, 05, 07, 08, hoặc 09">
 
             <label for="province">Tỉnh/Thành phố</label>
             <select id="province" name="province" required>
@@ -248,6 +261,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
                 });
         }
+
+        // Xử lý submit form
+        document.querySelector('.profile-form').addEventListener('submit', function(e) {
+            let phoneInput = document.getElementById('phone');
+            let phoneValue = phoneInput.value;
+            let phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
+
+            if (!phonePattern.test(phoneValue)) {
+                e.preventDefault(); // Ngăn submit form
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Số điện thoại phải có 10 chữ số và bắt đầu bằng 03, 05, 07, 08, hoặc 09!',
+                    confirmButtonColor: '#ff4d4d',
+                    confirmButtonText: 'OK'
+                });
+                return false;
+            }
+        });
+
         // Hiển thị thông báo SweetAlert2 dựa trên biến notification
         const notification = '<?= $notification ?>';
         if (notification) {
@@ -263,7 +296,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         window.location.reload();
                     });
                     break;
-                    case 'image_success':
+                case 'image_success':
                     Swal.fire({
                         icon: 'success',
                         title: 'Thành công',
@@ -271,13 +304,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         confirmButtonColor: '#3498db',
                         confirmButtonText: 'OK'
                     }).then(() => {
-                        // Option 1: Update image dynamically
                         const avatar = document.getElementById('profile-avatar');
                         if (avatar) {
                             const timestamp = new Date().getTime();
-                            avatar.src = newImagePath + '?t=' + timestamp; // Use newImagePath with cache-busting
+                            avatar.src = '<?= $user['anh']; ?>?t=' + timestamp; // Cập nhật ảnh động
                         }
-                        // Option 2: Reload the page as a fallback
                         window.location.reload();
                     });
                     break;
@@ -317,35 +348,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         confirmButtonText: 'OK'
                     });
                     break;
+                case 'phone_invalid':
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Số điện thoại phải có 10 chữ số và bắt đầu bằng 03, 05, 07, 08, hoặc 09!',
+                        confirmButtonColor: '#ff4d4d',
+                        confirmButtonText: 'OK'
+                    });
+                    break;
+                case 'account_locked':
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Thông báo',
+                        text: 'Tài khoản của bạn đã bị khóa!',
+                        confirmButtonColor: '#3498db',
+                        confirmButtonText: 'OK',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        window.location.href = 'dangnhap.php';
+                    });
+                    break;
             }
         }
     });
     </script>
 </body>
 </html>
-
-<?php
-if (isset($_POST['khoa_taikhoan'])) {
-    $update_status_query = "UPDATE frm_dangky SET trangthai='đã khóa' WHERE username='$username'";
-    if (mysqli_query($conn, $update_status_query)) {
-        session_destroy(); // Xóa session để đăng xuất
-        $notification = 'account_locked';
-    }
-}
-?>
-
-<script>
-// Hiển thị thông báo khóa tài khoản
-if ('<?= $notification ?>' === 'account_locked') {
-    Swal.fire({
-        icon: 'info',
-        title: 'Thông báo',
-        text: 'Tài khoản của bạn đã bị khóa!',
-        confirmButtonColor: '#3498db',
-        confirmButtonText: 'OK',
-        allowOutsideClick: false
-    }).then(() => {
-        window.location.href = 'dangnhap.php';
-    });
-}
-</script>

@@ -57,14 +57,49 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_GET['action']) && $_GET['act
 // Xử lý hủy đơn hàng
 if (isset($_GET['action']) && $_GET['action'] == 'cancel' && isset($_GET['id'])) {
     $order_id = intval($_GET['id']);
-    $query = "UPDATE oder SET trangthai = 'Đã hủy' WHERE id = ? AND user_id = ? AND trangthai = 'Chờ xác nhận'";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("ii", $order_id, $user_id);
-    $stmt->execute();
-    $stmt->close();
-
-    header("Location: giaidoan.php");
-    exit();
+    
+    // Bắt đầu transaction để đảm bảo tính toàn vẹn dữ liệu
+    $conn->begin_transaction();
+    try {
+        // Lấy thông tin chi tiết đơn hàng từ oder_detail
+        $query = "SELECT sanpham_id, soluong FROM oder_detail WHERE oder_id = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("i", $order_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        // Cập nhật số lượng tồn kho cho từng sản phẩm
+        while ($row = $result->fetch_assoc()) {
+            $sanpham_id = $row['sanpham_id'];
+            $soluong = $row['soluong'];
+            
+            // Cộng lại số lượng tồn kho trong bảng sanpham
+            $update_query = "UPDATE sanpham SET soluong = soluong + ? WHERE id = ?";
+            $update_stmt = $conn->prepare($update_query);
+            $update_stmt->bind_param("ii", $soluong, $sanpham_id);
+            $update_stmt->execute();
+            $update_stmt->close();
+        }
+        $stmt->close();
+        
+        // Cập nhật trạng thái đơn hàng thành "Đã hủy"
+        $query = "UPDATE oder SET trangthai = 'Đã hủy' WHERE id = ? AND user_id = ? AND trangthai = 'Chờ xác nhận'";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("ii", $order_id, $user_id);
+        $stmt->execute();
+        $stmt->close();
+        
+        // Commit transaction
+        $conn->commit();
+        
+        header("Location: giaidoan.php");
+        exit();
+    } catch (Exception $e) {
+        // Rollback nếu có lỗi
+        $conn->rollback();
+        echo "<script>alert('Có lỗi xảy ra khi hủy đơn hàng: " . $e->getMessage() . "'); window.location.href='giaidoan.php';</script>";
+        exit();
+    }
 }
 
 // Lấy danh sách đơn hàng
@@ -446,7 +481,7 @@ $statuses = ['Chờ xác nhận', 'Đang giao', 'Đã giao'];
 <style>
 /* Reset and Base Styles */
 body {
-    background-color: #f5f7fa;
+    background-color:rgb(255, 255, 255);
     color: #333;
 }
 
@@ -517,7 +552,7 @@ body {
 .order-card {
     background-color: #fff;
     border-radius: 15px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
     overflow: hidden;
     transition: transform 0.3s ease;
